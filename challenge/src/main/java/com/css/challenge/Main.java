@@ -5,18 +5,24 @@ import com.css.challenge.client.Client;
 import com.css.challenge.client.Order;
 import com.css.challenge.client.Problem;
 import com.css.challenge.utils.DurationComparator;
+import com.css.challenge.utils.Tools;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Level;
 import org.slf4j.Logger;
@@ -78,28 +84,23 @@ public class Main implements Runnable {
 
       // ----------------------------------------------------------------------
       try {
-			Instant timestamp;
-		   
 			  for (Order order : problem.getOrders()) {
-				timestamp = Instant.now();
-				o.setTimestamp(timestamp);
-				if(o.getId().equals("dxoyb")) {
-					System.out.println("");
-				}
-				//Map<String, Order> coolerOrHeater = (o.getTemp().equals("hot"))? heater : cooler; 
-				long epochTimeMicroSecond = LocalDateTime.now().getNano()/1000L;
-				if(!o.getTemp().equals("room")) {
-				   Map<String, Order> coolerOrHeater = (o.getTemp().equals("hot"))? heater : cooler; 
+				Instant timestamp = Instant.now();
+				//long timestamp = ChronoUnit.MICROS.between(Instant.EPOCH, Instant.now());
+				order.setTimestamp(timestamp);
+				
+				if(!order.getTemp().equals("room")) {
+				   Map<String, Order> coolerOrHeater = (order.getTemp().equals("hot"))? heater : cooler; 
 				   if(coolerOrHeater.size()<6) {
-					    Tools.placeOnHeaterCoolerOnly(o, coolerOrHeater, actions, epochTimeMicroSecond);
+					    Tools.placeOnHeaterCoolerOnly(order, coolerOrHeater, actions, timestamp);
 				   } else {
-					    o.setFreshness(o.getFreshness()/2);
-					    Tools.placeOnShelf(o, shelf,  actions, epochTimeMicroSecond, cooler, heater);
+					    order.setFreshness(order.getFreshness()/2);
+					    Tools.placeOnShelf(order, shelf,  actions, timestamp, cooler, heater);
 				   } 
 				} else {
-					  Tools.placeOnShelf(o, shelf,  actions, epochTimeMicroSecond, cooler, heater);
+					  Tools.placeOnShelf(order, shelf,  actions, timestamp, cooler, heater);
 				}
-				Callable<String> pickOrders = () -> pickUpOrder2(o, intervalMin, intervalMax, actions, cooler, heater, shelf);
+				Callable<String> pickOrders = () -> pickUpOrder2(order, min, max, actions, cooler, heater, shelf);
 				Future<String> result = executor.submit(pickOrders);				
 				//System.out.println(result.get());				
 				try {
@@ -116,18 +117,10 @@ public class Main implements Runnable {
 		/*	for(Action a : actions) {
 				   System.out.println(a);
 			} */
-
-  } catch (URISyntaxException e) {
-	 e.printStackTrace();;
   } catch (InterruptedException e) {
 	// TODO Auto-generated catch block
 	e.printStackTrace();
-  } catch (IOException e) {
-	// TODO Auto-generated catch blockcatch (ExecutionException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	e.printStackTrace();
-  }
+  } 
  
 
       String result = client.solveProblem(problem.getTestId(), rate, min, max, actions);
@@ -137,6 +130,54 @@ public class Main implements Runnable {
       LOGGER.error("Simulation failed: {}", e.getMessage());
     }
   }
+	static String pickUpOrder2(Order order, Duration min, Duration max, List<Action> actions,Map<String, Order> cooler, Map<String, Order> heater, PriorityQueue<Order> shelf) {
+		
+		long interval = Tools.getInterval(min, max);
+		try {
+			Thread.sleep(interval);
+		} catch (InterruptedException e) {
+			   Thread.currentThread().interrupt();
+			   return "e";
+		}		
+		pickUpOrder(actions,cooler, heater, order, shelf);		
+		return "pickup thread of "+ order + "is done";			
+	}
+	
+	
+
+	private static void pickUpOrder(List<Action> actions,Map<String, Order> cooler, Map<String, Order> heater, Order order, PriorityQueue<Order> shelf) {
+		if(order.getId().equals("dxoyb")) {
+			System.out.println("");
+		}
+		   long epochTimeMicroSecond = ChronoUnit.MICROS.between(Instant.EPOCH, Instant.now());
+		   Instant timestamp = Instant.now();
+		   Action action;
+		   
+		   if(!Tools.isFresh(order)) {		   
+			   if(order.getStorage().equals("heater")) {
+				      heater.remove(order.getId());
+				      action = new Action(timestamp, order.getId(), "discard", "heater");
+			   } else if(order.getStorage().equals("cooler")) {
+				      cooler.remove(order.getId());
+				      action = new Action(timestamp, order.getId(), "discard", "cooler");
+			   } else {
+				      shelf.remove(order);
+				      action = new Action(timestamp, order.getId(), "discard", "shelf");
+			   }
+		   } else {
+			   if(order.getStorage().equals("heater")) {
+			      heater.remove(order.getId());
+			      action = new Action(timestamp, order.getId(), "pickup", "heater");
+		       } else if(order.getStorage().equals("cooler")) {
+			      cooler.remove(order.getId());
+			      action = new Action(timestamp, order.getId(), "pickup", "cooler");
+		      } else {
+			      shelf.remove(order);
+			      action = new Action(timestamp, order.getId(), "pickup", "shelf");
+		      }
+		   }
+		   actions.add(action);
+	}
 
   public static void main(String[] args) {
     new CommandLine(new Main()).execute(args);

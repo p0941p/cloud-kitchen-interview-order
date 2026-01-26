@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -14,16 +15,10 @@ public class Order {
   private final String name; // food name
   private final String temp; // ideal temperature
   private final int price; // price in dollars
-  private final int freshness; // freshness in seconds
+  private int freshness; // freshness in seconds
   private String storage;
-
-  public void setTimestamp(LocalDateTime timestamp) {
-	this.timestamp = timestamp;
-  }
-
-  private LocalDateTime timestamp;
+  private Instant timestamp;
   
-
   public Order(
       @JsonProperty("id") String id,
       @JsonProperty("name") String name,
@@ -65,12 +60,21 @@ public class Order {
 	return storage;
   }
 
+
+  public void setFreshness(int freshness) {
+	this.freshness = freshness;
+  }
+
   public void setStorage(String storage) {
 	this.storage = storage;
   }
 
-  public LocalDateTime getTimestamp() {
+  public Instant getTimestamp() {
 	return timestamp;
+  }
+
+  public void setTimestamp(Instant timestamp) {
+	this.timestamp = timestamp;
   }
 
   @Override

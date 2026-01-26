@@ -1,7 +1,9 @@
 package com.css.challenge.utils;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
@@ -42,8 +44,8 @@ System.out.println("epoch: " + testTime);
     	return true;   	
     }
     
-    public static int getInterval(int max, int min) {
-    	 return (int) ((Math.random() * (max - min)) + min);   
+    public static long getInterval(Duration max, Duration min) {
+    	 return  (long)((Math.random() * (max.toMillis() - min.toMillis())) + min.toMillis());   
     }
     
     public static void placeOnShelf(Order o, PriorityQueue<Order> shelf, List<Action> actions, Instant epochTime,Map<String, Order> cooler, Map<String, Order> heater) {
@@ -67,10 +69,10 @@ System.out.println("epoch: " + testTime);
 			}
 		}
     }
-    public static void placeOnHeaterCoolerOnly(Order o,Map<String, Order> coolerOrHeater,  List<Action> actions,Instant epochTime) {
+    public static void placeOnHeaterCoolerOnly(Order o,Map<String, Order> coolerOrHeater,  List<Action> actions,Instant timestamp) {
     	coolerOrHeater.put(o.getId(), o);
     	String target = (o.getTemp().equals("hot"))? "heater" : "cooler"; 
-		Action action = new Action(epochTime, o.getId(), "place", target);
+		Action action = new Action(timestamp, o.getId(), "place", target);
 		actions.add(action);
 		//storageLookUp.put(o.getId(), target);
 		o.setStorage(target);
