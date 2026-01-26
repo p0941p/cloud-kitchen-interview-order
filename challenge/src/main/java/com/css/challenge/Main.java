@@ -4,6 +4,8 @@ import com.css.challenge.client.Action;
 import com.css.challenge.client.Client;
 import com.css.challenge.client.Order;
 import com.css.challenge.client.Problem;
+import com.css.challenge.utils.DurationComparator;
+
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
@@ -75,6 +77,58 @@ public class Main implements Runnable {
       }
 
       // ----------------------------------------------------------------------
+      try {
+			Instant timestamp;
+		   
+			  for (Order order : problem.getOrders()) {
+				timestamp = Instant.now();
+				o.setTimestamp(timestamp);
+				if(o.getId().equals("dxoyb")) {
+					System.out.println("");
+				}
+				//Map<String, Order> coolerOrHeater = (o.getTemp().equals("hot"))? heater : cooler; 
+				long epochTimeMicroSecond = LocalDateTime.now().getNano()/1000L;
+				if(!o.getTemp().equals("room")) {
+				   Map<String, Order> coolerOrHeater = (o.getTemp().equals("hot"))? heater : cooler; 
+				   if(coolerOrHeater.size()<6) {
+					    Tools.placeOnHeaterCoolerOnly(o, coolerOrHeater, actions, epochTimeMicroSecond);
+				   } else {
+					    o.setFreshness(o.getFreshness()/2);
+					    Tools.placeOnShelf(o, shelf,  actions, epochTimeMicroSecond, cooler, heater);
+				   } 
+				} else {
+					  Tools.placeOnShelf(o, shelf,  actions, epochTimeMicroSecond, cooler, heater);
+				}
+				Callable<String> pickOrders = () -> pickUpOrder2(o, intervalMin, intervalMax, actions, cooler, heater, shelf);
+				Future<String> result = executor.submit(pickOrders);				
+				//System.out.println(result.get());				
+				try {
+					Thread.sleep(rate);
+				} catch (InterruptedException e) {
+					   Thread.currentThread().interrupt();
+					   e.printStackTrace();
+				}
+			}
+			executor.shutdown();
+			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+			
+			
+		/*	for(Action a : actions) {
+				   System.out.println(a);
+			} */
+
+  } catch (URISyntaxException e) {
+	 e.printStackTrace();;
+  } catch (InterruptedException e) {
+	// TODO Auto-generated catch block
+	e.printStackTrace();
+  } catch (IOException e) {
+	// TODO Auto-generated catch blockcatch (ExecutionException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	e.printStackTrace();
+  }
+ 
 
       String result = client.solveProblem(problem.getTestId(), rate, min, max, actions);
       LOGGER.info("Result: {}", result);

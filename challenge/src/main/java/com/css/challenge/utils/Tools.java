@@ -23,13 +23,13 @@ System.out.println("Nanos within the second: " + nanos);
 System.out.println("epoch: " + testTime);
 */
 	}
-    public static void discardNPlace(List<Action> actions, long epochTime, PriorityQueue<Order> heap, Order o) {
+    public static void discardNPlace(List<Action> actions, Instant epochTime, PriorityQueue<Order> heap, Order o) {
     	Order toBeDiscard = heap.peek();
     	heap.poll();
-    	Action actionDiscard = new Action(toBeDiscard.getId(), "discard", "shelf", epochTime);
+    	Action actionDiscard = new Action(epochTime, toBeDiscard.getId(), "discard", "shelf");
     	actions.add(actionDiscard);
     	heap.offer(o);
-    	Action actionPlace = new Action(o.getId(), "place", "shelf", epochTime);
+    	Action actionPlace = new Action(epochTime, o.getId(), "place", "shelf");
     	actions.add(actionPlace);
     }
     
@@ -46,12 +46,12 @@ System.out.println("epoch: " + testTime);
     	 return (int) ((Math.random() * (max - min)) + min);   
     }
     
-    public static void placeOnShelf(Order o, PriorityQueue<Order> shelf, List<Action> actions, long epochTime,Map<String, Order> cooler, Map<String, Order> heater) {
+    public static void placeOnShelf(Order o, PriorityQueue<Order> shelf, List<Action> actions, Instant epochTime,Map<String, Order> cooler, Map<String, Order> heater) {
     	if(shelf.size() < 12) {
 			shelf.add(o);
     		//storageLookUp.put(o.getId(), "shelf");
 			o.setStorage("shelf");
-    		Action action = new Action(o.getId(), "place", "shelf", epochTime);
+    		Action action = new Action(epochTime, o.getId(), "place", "shelf");
     		actions.add(action);
 		} else {		
 			if(o.getTemp().equals("room")) {
@@ -67,10 +67,10 @@ System.out.println("epoch: " + testTime);
 			}
 		}
     }
-    public static void placeOnHeaterCoolerOnly(Order o,Map<String, Order> coolerOrHeater,  List<Action> actions,long epochTime) {
+    public static void placeOnHeaterCoolerOnly(Order o,Map<String, Order> coolerOrHeater,  List<Action> actions,Instant epochTime) {
     	coolerOrHeater.put(o.getId(), o);
     	String target = (o.getTemp().equals("hot"))? "heater" : "cooler"; 
-		Action action = new Action(o.getId(), "place", target, epochTime);
+		Action action = new Action(epochTime, o.getId(), "place", target);
 		actions.add(action);
 		//storageLookUp.put(o.getId(), target);
 		o.setStorage(target);
