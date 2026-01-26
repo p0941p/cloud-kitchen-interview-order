@@ -37,8 +37,12 @@ System.out.println("epoch: " + testTime);
     
     public static boolean isFresh(Order o) {
     	
-    	LocalDateTime expiration = o.getTimestamp().plusSeconds(o.getFreshness());
-    	if(LocalDateTime.now().isAfter(expiration)) {
+    	//LocalDateTime expiration = o.getTimestamp().plusSeconds(o.getFreshness());
+    	//if(LocalDateTime.now().isAfter(expiration)) {
+    	
+    	Instant expiration = o.getTimestamp().plusSeconds(o.getFreshness());
+    	
+    	if(Instant.now().isAfter(expiration)) {
     		return false;
     	}
     	return true;   	
