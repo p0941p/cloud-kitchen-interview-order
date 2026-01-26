@@ -11,6 +11,9 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -71,20 +74,21 @@ public class Main implements Runnable {
   	  Comparator<Order> comparator = new DurationComparator();
       Map<String, Order> heater = new HashMap<>();
       Map<String, Order> cooler = new HashMap<>();
-      PriorityQueue<Order> shelf = new PriorityQueue<>(10, comparator);
-	  ExecutorService executor = Executors.newFixedThreadPool(10);
+      PriorityQueue<Order> shelf = new PriorityQueue<>(12, comparator);
+	  //ExecutorService executor = Executors.newFixedThreadPool(20);
+      ExecutorService executor = Executors.newCachedThreadPool();
 	
       List<Action> actions = new ArrayList<>();
       for (Order order : problem.getOrders()) {
         LOGGER.info("Received: {}", order);
 
-        actions.add(new Action(Instant.now(), order.getId(), Action.PLACE, Action.COOLER));
+    //    actions.add(new Action(Instant.now(), order.getId(), Action.PLACE, Action.COOLER));
         Thread.sleep(rate.toMillis());
       }
 
       // ----------------------------------------------------------------------
       try {
-			  for (Order order : problem.getOrders()) {
+			for (Order order : problem.getOrders()) {
 				Instant timestamp = Instant.now();
 				//long timestamp = ChronoUnit.MICROS.between(Instant.EPOCH, Instant.now());
 				order.setTimestamp(timestamp);
@@ -101,7 +105,7 @@ public class Main implements Runnable {
 					  Tools.placeOnShelf(order, shelf,  actions, timestamp, cooler, heater);
 				}
 				Callable<String> pickOrders = () -> pickUpOrder2(order, min, max, actions, cooler, heater, shelf);
-				Future<String> result = executor.submit(pickOrders);				
+								
 				//System.out.println(result.get());				
 				try {
 					Thread.sleep(rate);
@@ -109,6 +113,7 @@ public class Main implements Runnable {
 					   Thread.currentThread().interrupt();
 					   e.printStackTrace();
 				}
+				Future<String> result = executor.submit(pickOrders);
 			}
 			executor.shutdown();
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
@@ -132,51 +137,64 @@ public class Main implements Runnable {
   }
 	static String pickUpOrder2(Order order, Duration min, Duration max, List<Action> actions,Map<String, Order> cooler, Map<String, Order> heater, PriorityQueue<Order> shelf) {
 		
-		long interval = Tools.getInterval(min, max);
+	//	long interval = Tools.getInterval(min, max);
 		try {
-			Thread.sleep(interval);
+	//		System.out.println("interval: "+ interval);
+			Thread.sleep(min.toMillis());
+			Instant timestamp = Instant.now();
+			pickUpOrder(timestamp, actions,cooler, heater, order, shelf);		
 		} catch (InterruptedException e) {
 			   Thread.currentThread().interrupt();
 			   return "e";
 		}		
-		pickUpOrder(actions,cooler, heater, order, shelf);		
+		
+	
 		return "pickup thread of "+ order + "is done";			
 	}
 	
 	
 
-	private static void pickUpOrder(List<Action> actions,Map<String, Order> cooler, Map<String, Order> heater, Order order, PriorityQueue<Order> shelf) {
-		if(order.getId().equals("dxoyb")) {
-			System.out.println("");
-		}
-		   long epochTimeMicroSecond = ChronoUnit.MICROS.between(Instant.EPOCH, Instant.now());
-		   Instant timestamp = Instant.now();
+	private static void pickUpOrder(Instant timestamp, List<Action> actions,Map<String, Order> cooler, Map<String, Order> heater, Order order, PriorityQueue<Order> shelf) {
+		
+		//long epochTimeMicroSecond = ChronoUnit.MICROS.between(Instant.EPOCH, Instant.now());
+		  
 		   Action action;
-		   
+		/*   
+		   DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+			  Instant instant = Instant.now();
+			  ZonedDateTime localZonedTime = instant.atZone(ZoneId.systemDefault());
+			  String formattedTime = localZonedTime.format(formatter);
+		 */  
 		   if(!Tools.isFresh(order)) {		   
 			   if(order.getStorage().equals("heater")) {
+				   action = new Action(timestamp, order.getId(), "discard", "heater");
 				      heater.remove(order.getId());
-				      action = new Action(timestamp, order.getId(), "discard", "heater");
+				     
 			   } else if(order.getStorage().equals("cooler")) {
+				   action = new Action(timestamp, order.getId(), "discard", "cooler");
 				      cooler.remove(order.getId());
-				      action = new Action(timestamp, order.getId(), "discard", "cooler");
+				     
 			   } else {
+				    action = new Action(timestamp, order.getId(), "discard", "shelf");
 				      shelf.remove(order);
-				      action = new Action(timestamp, order.getId(), "discard", "shelf");
+				  
 			   }
 		   } else {
 			   if(order.getStorage().equals("heater")) {
+				   action = new Action(timestamp, order.getId(), "pickup", "heater");
 			      heater.remove(order.getId());
-			      action = new Action(timestamp, order.getId(), "pickup", "heater");
+			    
 		       } else if(order.getStorage().equals("cooler")) {
+		    	   action = new Action(timestamp, order.getId(), "pickup", "cooler");
 			      cooler.remove(order.getId());
-			      action = new Action(timestamp, order.getId(), "pickup", "cooler");
+			     
 		      } else {
 			      shelf.remove(order);
 			      action = new Action(timestamp, order.getId(), "pickup", "shelf");
 		      }
 		   }
 		   actions.add(action);
+		 //   System.out.println(action + "timestamp: "+formattedTime);
 	}
 
   public static void main(String[] args) {

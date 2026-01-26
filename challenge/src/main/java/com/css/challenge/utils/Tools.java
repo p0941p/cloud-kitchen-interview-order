@@ -27,12 +27,13 @@ System.out.println("epoch: " + testTime);
 	}
     public static void discardNPlace(List<Action> actions, Instant epochTime, PriorityQueue<Order> heap, Order o) {
     	Order toBeDiscard = heap.peek();
-    	heap.poll();
     	Action actionDiscard = new Action(epochTime, toBeDiscard.getId(), "discard", "shelf");
     	actions.add(actionDiscard);
-    	heap.offer(o);
+    	heap.poll();
     	Action actionPlace = new Action(epochTime, o.getId(), "place", "shelf");
     	actions.add(actionPlace);
+    	heap.offer(o);
+    	
     }
     
     public static boolean isFresh(Order o) {
@@ -47,17 +48,20 @@ System.out.println("epoch: " + testTime);
     	}
     	return true;   	
     }
-    
+    /*
     public static long getInterval(Duration max, Duration min) {
-    	 return  (long)((Math.random() * (max.toMillis() - min.toMillis())) + min.toMillis());   
+    	 long interval =  (long)((Math.random() * (max.toMillis() - min.toMillis())) + min.toMillis());
+    	// long second = interval
+    	 return interval;
     }
-    
+    */
     public static void placeOnShelf(Order o, PriorityQueue<Order> shelf, List<Action> actions, Instant epochTime,Map<String, Order> cooler, Map<String, Order> heater) {
     	if(shelf.size() < 12) {
+    		Action action = new Action(epochTime, o.getId(), "place", "shelf");
 			shelf.add(o);
     		//storageLookUp.put(o.getId(), "shelf");
 			o.setStorage("shelf");
-    		Action action = new Action(epochTime, o.getId(), "place", "shelf");
+    		
     		actions.add(action);
 		} else {		
 			if(o.getTemp().equals("room")) {
@@ -74,9 +78,10 @@ System.out.println("epoch: " + testTime);
 		}
     }
     public static void placeOnHeaterCoolerOnly(Order o,Map<String, Order> coolerOrHeater,  List<Action> actions,Instant timestamp) {
-    	coolerOrHeater.put(o.getId(), o);
     	String target = (o.getTemp().equals("hot"))? "heater" : "cooler"; 
 		Action action = new Action(timestamp, o.getId(), "place", target);
+    	coolerOrHeater.put(o.getId(), o);
+    
 		actions.add(action);
 		//storageLookUp.put(o.getId(), target);
 		o.setStorage(target);
