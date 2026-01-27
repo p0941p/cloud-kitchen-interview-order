@@ -14,17 +14,6 @@ import com.css.challenge.client.Order;
 
 public class Tools {
 
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-/*		long testTime = LocalDateTime.now().getNano();
-		
-
-Instant instant = Instant.now();
-int nanos = instant.getNano();
-System.out.println("Nanos within the second: " + nanos);
-System.out.println("epoch: " + testTime);
-*/
-	}
     public static void discardNPlace(List<Action> actions, Instant epochTime, PriorityQueue<Order> heap, Order o) {
     	Order toBeDiscard = heap.peek();
     	Action actionDiscard = new Action(epochTime, toBeDiscard.getId(), "discard", "shelf");
@@ -48,13 +37,7 @@ System.out.println("epoch: " + testTime);
     	}
     	return true;   	
     }
-    /*
-    public static long getInterval(Duration max, Duration min) {
-    	 long interval =  (long)((Math.random() * (max.toMillis() - min.toMillis())) + min.toMillis());
-    	// long second = interval
-    	 return interval;
-    }
-    */
+  
     public static void placeOnShelf(Order o, PriorityQueue<Order> shelf, List<Action> actions, Instant epochTime,Map<String, Order> cooler, Map<String, Order> heater) {
     	if(shelf.size() < 12) {
     		Action action = new Action(epochTime, o.getId(), "place", "shelf");
