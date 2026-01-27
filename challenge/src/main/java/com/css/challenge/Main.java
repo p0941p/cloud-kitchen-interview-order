@@ -85,8 +85,6 @@ public class Main implements Runnable {
       //    actions.add(new Action(Instant.now(), order.getId(), Action.PLACE, Action.COOLER));
         Thread.sleep(rate.toMillis());
       }
-
-      // ----------------------------------------------------------------------
       
 	  for (Order order : problem.getOrders()) {
 		Instant timestamp = Instant.now();
@@ -100,36 +98,26 @@ public class Main implements Runnable {
 				order.setFreshness(order.getFreshness()/2);
 			    Tools.placeOnShelf(order, shelf,  actions, timestamp, cooler, heater);
 			} 
-				} else {
-					  Tools.placeOnShelf(order, shelf,  actions, timestamp, cooler, heater);
-				}
-				Callable<String> pickOrders = () -> pickUpOrder2(order, min, max, actions, cooler, heater, shelf);
-								
-				//System.out.println(result.get());				
-				try {
-					Thread.sleep(rate);
-				} catch (InterruptedException e) {
-					   Thread.currentThread().interrupt();
-					   e.printStackTrace();
-				}
-				Future<String> result = executor.submit(pickOrders);
-			}
-			executor.shutdown();
-			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-	
-
+		} else {
+			Tools.placeOnShelf(order, shelf,  actions, timestamp, cooler, heater);
+		}
+		Callable<String> pickOrders = () -> pickUpOrder2(order, min, max, actions, cooler, heater, shelf);						
+		Thread.sleep(rate);
+		Future<String> result = executor.submit(pickOrders);
+	  }
+	  executor.shutdown();
+	  executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+	  
       String result = client.solveProblem(problem.getTestId(), rate, min, max, actions);
       LOGGER.info("Result: {}", result);
 
-    } catch (IOException | InterruptedException e) {
-      LOGGER.error("Simulation failed: {}", e.getMessage());
-    }
+     } catch (IOException | InterruptedException e) {
+          LOGGER.error("Simulation failed: {}", e.getMessage());
+     }
   }
 	static String pickUpOrder2(Order order, Duration min, Duration max, List<Action> actions,Map<String, Order> cooler, Map<String, Order> heater, PriorityQueue<Order> shelf) {
 		
-	//	long interval = Tools.getInterval(min, max);
 		try {
-	//		System.out.println("interval: "+ interval);
 			Thread.sleep(min.toMillis());
 			Instant timestamp = Instant.now();
 			pickUpOrder(timestamp, actions,cooler, heater, order, shelf);		
@@ -137,8 +125,6 @@ public class Main implements Runnable {
 			   Thread.currentThread().interrupt();
 			   return "e";
 		}		
-		
-	
 		return "pickup thread of "+ order + "is done";			
 	}
 	
