@@ -115,65 +115,51 @@ public class Main implements Runnable {
           LOGGER.error("Simulation failed: {}", e.getMessage());
      }
   }
-	static String pickUpOrder2(Order order, Duration min, Duration max, List<Action> actions,Map<String, Order> cooler, Map<String, Order> heater, PriorityQueue<Order> shelf) {
+  static String pickUpOrder2(Order order, Duration min, Duration max, List<Action> actions,Map<String, Order> cooler, Map<String, Order> heater, PriorityQueue<Order> shelf) {
 		
-		try {
+	  try {
 			Thread.sleep(min.toMillis());
 			Instant timestamp = Instant.now();
 			pickUpOrder(timestamp, actions,cooler, heater, order, shelf);		
-		} catch (InterruptedException e) {
+	  } catch (InterruptedException e) {
 			   Thread.currentThread().interrupt();
 			   return "e";
-		}		
-		return "pickup thread of "+ order + "is done";			
-	}
+	  }		
+	  return "pickup thread of "+ order + "is done";			
+  }
 	
 	
 
-	private static void pickUpOrder(Instant timestamp, List<Action> actions,Map<String, Order> cooler, Map<String, Order> heater, Order order, PriorityQueue<Order> shelf) {
+  private static void pickUpOrder(Instant timestamp, List<Action> actions,Map<String, Order> cooler, Map<String, Order> heater, Order order, PriorityQueue<Order> shelf) {
 		
-		//long epochTimeMicroSecond = ChronoUnit.MICROS.between(Instant.EPOCH, Instant.now());
-		  
-		   Action action;
-		/*   
-		   DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
-			  Instant instant = Instant.now();
-			  ZonedDateTime localZonedTime = instant.atZone(ZoneId.systemDefault());
-			  String formattedTime = localZonedTime.format(formatter);
-		 */  
-		   if(!Tools.isFresh(order)) {		   
-			   if(order.getStorage().equals("heater")) {
-				   action = new Action(timestamp, order.getId(), "discard", "heater");
-				      heater.remove(order.getId());
-				     
-			   } else if(order.getStorage().equals("cooler")) {
-				   action = new Action(timestamp, order.getId(), "discard", "cooler");
-				      cooler.remove(order.getId());
-				     
-			   } else {
-				    action = new Action(timestamp, order.getId(), "discard", "shelf");
-				      shelf.remove(order);
-				  
-			   }
-		   } else {
-			   if(order.getStorage().equals("heater")) {
-				   action = new Action(timestamp, order.getId(), "pickup", "heater");
-			      heater.remove(order.getId());
-			    
-		       } else if(order.getStorage().equals("cooler")) {
-		    	   action = new Action(timestamp, order.getId(), "pickup", "cooler");
-			      cooler.remove(order.getId());
-			     
-		      } else {
-			      shelf.remove(order);
-			      action = new Action(timestamp, order.getId(), "pickup", "shelf");
-		      }
-		   }
-		   actions.add(action);
-		 //   System.out.println(action + "timestamp: "+formattedTime);
-	}
+	  Action action;
+	  if(!Tools.isFresh(order)) {		   
+	      if(order.getStorage().equals("heater")) {
+			 action = new Action(timestamp, order.getId(), "discard", "heater");
+			 heater.remove(order.getId());
+		  } else if(order.getStorage().equals("cooler")) {
+			 action = new Action(timestamp, order.getId(), "discard", "cooler");
+			 cooler.remove(order.getId());				     
+		  } else {
+			 action = new Action(timestamp, order.getId(), "discard", "shelf");
+			 shelf.remove(order);
+		  }
+	  } else {
+		  if(order.getStorage().equals("heater")) {
+			 action = new Action(timestamp, order.getId(), "pickup", "heater");
+			 heater.remove(order.getId());
+		  } else if(order.getStorage().equals("cooler")) {
+		     action = new Action(timestamp, order.getId(), "pickup", "cooler");
+			 cooler.remove(order.getId());    
+		  } else {
+			 shelf.remove(order);
+			 action = new Action(timestamp, order.getId(), "pickup", "shelf");
+		  }
+	  }
+	 actions.add(action);
+  }
 
   public static void main(String[] args) {
-    new CommandLine(new Main()).execute(args);
+     new CommandLine(new Main()).execute(args);
   }
 }
