@@ -87,17 +87,13 @@ public class Main implements Runnable {
 	   for (Order order : problem.getOrders()) {
 		   placeOrder(order, heater, cooler, shelf, executor, actions);
 	  }
-			executor.shutdown();
-	  try {
+			executor.shutdown(); 
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);		
-       } catch (InterruptedException e) {
-	// TODO Auto-generated catch block
-	   e.printStackTrace();
-    } 
+      
       String result = client.solveProblem(problem.getTestId(), rate, min, max, actions);
       LOGGER.info("Result: {}", result);
 
-    } catch (IOException  e ) {
+    } catch (IOException | InterruptedException e ) {
       LOGGER.error("Simulation failed: {}", e.getMessage());
     }
   }
@@ -119,16 +115,14 @@ public class Main implements Runnable {
 			Tools.placeOnShelf(order, shelf,  actions, timestamp, cooler, heater);
 		 }
 		 Callable<String> pickOrders = () -> pickUpOrderEntry(order, min, max, actions, cooler, heater, shelf);
-								
-				//System.out.println(result.get());				
-		
+			
 		 Future<String> result = executor.submit(pickOrders);
 		 try {
 				Thread.sleep(rate);
 			 } catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
-				e.printStackTrace();
-			 }
+				LOGGER.error(e.getMessage());
+		 }
   }
   
   private String pickUpOrderEntry(Order order, Duration min, Duration max, List<Action> actions,Map<String, Order> cooler, Map<String, Order> heater, PriorityQueue<Order> shelf) {
@@ -139,7 +133,7 @@ public class Main implements Runnable {
 			pickUpOrder(timestamp, actions,cooler, heater, order, shelf);		
 		} catch (InterruptedException e) {
 			   Thread.currentThread().interrupt();
-			   LOGGER.error("Simulation failed: {}", e.getMessage());
+			   LOGGER.error(e.getMessage());
 		}		
 		return "pickup thread of "+ order + "is done";			
   }
