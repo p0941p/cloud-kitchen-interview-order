@@ -43,7 +43,7 @@ public class Main implements Runnable {
   String endpoint = "https://api.cloudkitchens.com";
 
   @Option(names = "--auth", description = "Authentication token (required)")
-  String auth = "";
+  String auth = "uy4bbtwjtpmy";
 
   @Option(names = "--name", description = "Problem name. Leave blank (optional)")
   String name = "";
