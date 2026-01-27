@@ -19,7 +19,6 @@ public class DurationComparator implements Comparator<Order>{
 			} else if(durationX.isBefore(durationY)){
 				return -1;
 			}
-		    return 0;
 		}
         return 0;
 	}
