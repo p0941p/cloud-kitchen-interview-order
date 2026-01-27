@@ -65,116 +65,114 @@ public class Main implements Runnable {
   Duration max = Duration.ofSeconds(8);
 
   @Override
-  public void run() {
-    try {
-      Client client = new Client(endpoint, auth);
-      Problem problem = client.newProblem(name, seed);
+	public void run() {
+		try {
+			Client client = new Client(endpoint, auth);
+			Problem problem = client.newProblem(name, seed);
 
-      // ------ Execution harness logic goes here using rate, min and max ----
-  	  Comparator<Order> comparator = new DurationComparator();
-      Map<String, Order> heater = new HashMap<>();
-      Map<String, Order> cooler = new HashMap<>();
-      PriorityQueue<Order> shelf = new PriorityQueue<>(12, comparator);
-	  //ExecutorService executor = Executors.newFixedThreadPool(20);
-      ExecutorService executor = Executors.newCachedThreadPool();
-	
-      List<Action> actions = new ArrayList<>();
-      for (Order order : problem.getOrders()) {
-        LOGGER.info("Received: {}", order);
-    //    actions.add(new Action(Instant.now(), order.getId(), Action.PLACE, Action.COOLER));
-      }
-  
-	   for (Order order : problem.getOrders()) {
-		   placeOrder(order, heater, cooler, shelf, executor, actions);
-	  }
-			executor.shutdown(); 
-			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);		
-      
-      String result = client.solveProblem(problem.getTestId(), rate, min, max, actions);
-      LOGGER.info("Result: {}", result);
+			// ------ Execution harness logic goes here using rate, min and max ----
+			Comparator<Order> comparator = new DurationComparator();
+			Map<String, Order> heater = new HashMap<>();
+			Map<String, Order> cooler = new HashMap<>();
+			PriorityQueue<Order> shelf = new PriorityQueue<>(12, comparator);
+			// ExecutorService executor = Executors.newFixedThreadPool(20);
+			ExecutorService executor = Executors.newCachedThreadPool();
 
-    } catch (IOException | InterruptedException e ) {
-      LOGGER.error("Simulation failed: {}", e.getMessage());
-    }
-  }
-  
+			List<Action> actions = new ArrayList<>();
+			for (Order order : problem.getOrders()) {
+				LOGGER.info("Received: {}", order);
+				// actions.add(new Action(Instant.now(), order.getId(), Action.PLACE,
+				// Action.COOLER));
+			}
+
+			for (Order order : problem.getOrders()) {
+				placeOrder(order, heater, cooler, shelf, executor, actions);
+			}
+			executor.shutdown();
+			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+
+			String result = client.solveProblem(problem.getTestId(), rate, min, max, actions);
+			LOGGER.info("Result: {}", result);
+
+		} catch (IOException | InterruptedException e) {
+			LOGGER.error("Simulation failed: {}", e.getMessage());
+		}
+	}
    
-  private void placeOrder(Order order, Map<String, Order> heater, Map<String, Order> cooler, PriorityQueue<Order> shelf,  ExecutorService executor , List<Action> actions ) {
-		 Instant timestamp = Instant.now();
-		 order.setTimestamp(timestamp);
-				
-		 if(!order.getTemp().equals("room")) {
-		    Map<String, Order> coolerOrHeater = (order.getTemp().equals("hot"))? heater : cooler; 
-		    if(coolerOrHeater.size()<6) {
-			   Tools.placeOnHeaterCoolerOnly(order, coolerOrHeater, actions, timestamp);
-		    } else {
-			   order.setFreshness(order.getFreshness()/2);
-			   Tools.placeOnShelf(order, shelf,  actions, timestamp, cooler, heater);
-		    } 
-		 } else {
-			Tools.placeOnShelf(order, shelf,  actions, timestamp, cooler, heater);
-		 }
-		 Callable<String> pickOrders = () -> pickUpOrderEntry(order, min, max, actions, cooler, heater, shelf);
-			
-		 Future<String> result = executor.submit(pickOrders);
-		 try {
-				Thread.sleep(rate);
-			 } catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
-				LOGGER.error(e.getMessage());
-		 }
-  }
-  
-  private String pickUpOrderEntry(Order order, Duration min, Duration max, List<Action> actions,Map<String, Order> cooler, Map<String, Order> heater, PriorityQueue<Order> shelf) {
+	private void placeOrder(Order order, Map<String, Order> heater, Map<String, Order> cooler,
+		PriorityQueue<Order> shelf, ExecutorService executor, List<Action> actions) {
+		Instant timestamp = Instant.now();
+		order.setTimestamp(timestamp);
 
+		if (!order.getTemp().equals("room")) {
+			Map<String, Order> coolerOrHeater = (order.getTemp().equals("hot")) ? heater : cooler;
+			if (coolerOrHeater.size() < 6) {
+				Tools.placeOnHeaterCoolerOnly(order, coolerOrHeater, actions, timestamp);
+			} else {
+				order.setFreshness(order.getFreshness() / 2);
+				Tools.placeOnShelf(order, shelf, actions, timestamp, cooler, heater);
+			}
+		} else {
+			Tools.placeOnShelf(order, shelf, actions, timestamp, cooler, heater);
+		}
+		Callable<String> pickOrders = () -> pickUpOrderEntry(order, min, max, actions, cooler, heater, shelf);
+
+		Future<String> result = executor.submit(pickOrders);
+		try {
+			Thread.sleep(rate);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			LOGGER.error(e.getMessage());
+		}
+	}
+  
+	private String pickUpOrderEntry(Order order, Duration min, Duration max, List<Action> actions,
+		
+		Map<String, Order> cooler, Map<String, Order> heater, PriorityQueue<Order> shelf) {
 		try {
 			Thread.sleep(min.toMillis());
 			Instant timestamp = Instant.now();
-			pickUpOrder(timestamp, actions,cooler, heater, order, shelf);		
+			pickUpOrder(timestamp, actions, cooler, heater, order, shelf);
 		} catch (InterruptedException e) {
-			   Thread.currentThread().interrupt();
-			   LOGGER.error(e.getMessage());
-		}		
-		return "pickup thread of "+ order + "is done";			
-  }
+			Thread.currentThread().interrupt();
+			LOGGER.error(e.getMessage());
+		}
+		return "pickup thread of " + order + "is done";
+	}
 	
 	
 
-  private void pickUpOrder(Instant timestamp, List<Action> actions,Map<String, Order> cooler, Map<String, Order> heater, Order order, PriorityQueue<Order> shelf) {
-			
-		   Action action;		
-		   if(!Tools.isFresh(order)) {		   
-			   if(order.getStorage().equals("heater")) {
-				   action = new Action(timestamp, order.getId(), "discard", "heater");
-				      heater.remove(order.getId());
-				     
-			   } else if(order.getStorage().equals("cooler")) {
-				   action = new Action(timestamp, order.getId(), "discard", "cooler");
-				      cooler.remove(order.getId());
-				     
-			   } else {
-				    action = new Action(timestamp, order.getId(), "discard", "shelf");
-				      shelf.remove(order);
-				  
-			   }
-		   } else {
-			   if(order.getStorage().equals("heater")) {
-				   action = new Action(timestamp, order.getId(), "pickup", "heater");
-			      heater.remove(order.getId());
-			    
-		       } else if(order.getStorage().equals("cooler")) {
-		    	   action = new Action(timestamp, order.getId(), "pickup", "cooler");
-			      cooler.remove(order.getId());
-			     
-		      } else {
-			      shelf.remove(order);
-			      action = new Action(timestamp, order.getId(), "pickup", "shelf");
-		      }
-		   }
-		   actions.add(action);
+	private void pickUpOrder(Instant timestamp, List<Action> actions, Map<String, Order> cooler,
+			Map<String, Order> heater, Order order, PriorityQueue<Order> shelf) {
+
+		Action action;
+		if (!Tools.isFresh(order)) {
+			if (order.getStorage().equals("heater")) {
+				heater.remove(order.getId());
+				action = new Action(timestamp, order.getId(), "discard", "heater");
+			} else if (order.getStorage().equals("cooler")) {		
+				cooler.remove(order.getId());
+				action = new Action(timestamp, order.getId(), "discard", "cooler");
+			} else {		
+				shelf.remove(order);
+				action = new Action(timestamp, order.getId(), "discard", "shelf");
+			}
+		} else {
+			if (order.getStorage().equals("heater")) {			
+				heater.remove(order.getId());
+				action = new Action(timestamp, order.getId(), "pickup", "heater");
+			} else if (order.getStorage().equals("cooler")) {
+				cooler.remove(order.getId());
+				action = new Action(timestamp, order.getId(), "pickup", "cooler");
+			} else {
+				shelf.remove(order);
+				action = new Action(timestamp, order.getId(), "pickup", "shelf");
+			}
+		}
+		actions.add(action);
 	}
 
-  public static void main(String[] args) {
-    new CommandLine(new Main()).execute(args);
-  }
+	public static void main(String[] args) {
+		new CommandLine(new Main()).execute(args);
+	}
 }
