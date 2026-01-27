@@ -1,20 +1,8 @@
 package com.css.challenge;
 
-import com.css.challenge.client.Action;
-import com.css.challenge.client.Client;
-import com.css.challenge.client.Order;
-import com.css.challenge.client.Problem;
-import com.css.challenge.utils.DurationComparator;
-import com.css.challenge.utils.Tools;
-
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -30,6 +18,14 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.css.challenge.client.Action;
+import com.css.challenge.client.Client;
+import com.css.challenge.client.Order;
+import com.css.challenge.client.Problem;
+import com.css.challenge.utils.DurationComparator;
+import com.css.challenge.utils.Tools;
+
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -47,7 +43,7 @@ public class Main implements Runnable {
   String endpoint = "https://api.cloudkitchens.com";
 
   @Option(names = "--auth", description = "Authentication token (required)")
-  String auth = "uy4bbtwjtpmy";
+  String auth = "";
 
   @Option(names = "--name", description = "Problem name. Leave blank (optional)")
   String name = "";
@@ -103,7 +99,7 @@ public class Main implements Runnable {
 		}
 		Callable<String> pickOrders = () -> pickUpOrder2(order, min, max, actions, cooler, heater, shelf);						
 		Thread.sleep(rate);
-		Future<String> result = executor.submit(pickOrders);
+		//Future<String> result = executor.submit(pickOrders);
 	  }
 	  executor.shutdown();
 	  executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);

@@ -1,8 +1,8 @@
 package com.css.challenge.utils;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.Comparator;
+
 import com.css.challenge.client.Order;
 
 
@@ -18,9 +18,14 @@ public class DurationComparator implements Comparator<Order>{
 				return 1;
 			} else if(durationX.isBefore(durationY)){
 				return -1;
+			} else {
+				if(x.getPrice() > y.getPrice()) {
+					return 1;
+				} else {
+					return -1;
+				}
 			}
 		}
         return 0;
 	}
-
 }
