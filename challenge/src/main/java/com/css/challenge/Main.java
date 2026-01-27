@@ -82,25 +82,24 @@ public class Main implements Runnable {
       for (Order order : problem.getOrders()) {
         LOGGER.info("Received: {}", order);
 
-    //    actions.add(new Action(Instant.now(), order.getId(), Action.PLACE, Action.COOLER));
+      //    actions.add(new Action(Instant.now(), order.getId(), Action.PLACE, Action.COOLER));
         Thread.sleep(rate.toMillis());
       }
 
       // ----------------------------------------------------------------------
-      try {
-			for (Order order : problem.getOrders()) {
-				Instant timestamp = Instant.now();
-				//long timestamp = ChronoUnit.MICROS.between(Instant.EPOCH, Instant.now());
-				order.setTimestamp(timestamp);
+      
+	  for (Order order : problem.getOrders()) {
+		Instant timestamp = Instant.now();
+		order.setTimestamp(timestamp);
 				
-				if(!order.getTemp().equals("room")) {
-				   Map<String, Order> coolerOrHeater = (order.getTemp().equals("hot"))? heater : cooler; 
-				   if(coolerOrHeater.size()<6) {
-					    Tools.placeOnHeaterCoolerOnly(order, coolerOrHeater, actions, timestamp);
-				   } else {
-					    order.setFreshness(order.getFreshness()/2);
-					    Tools.placeOnShelf(order, shelf,  actions, timestamp, cooler, heater);
-				   } 
+		if(!order.getTemp().equals("room")) {
+		    Map<String, Order> coolerOrHeater = (order.getTemp().equals("hot"))? heater : cooler; 
+		    if(coolerOrHeater.size()<6) {
+			    Tools.placeOnHeaterCoolerOnly(order, coolerOrHeater, actions, timestamp);
+		    } else {
+				order.setFreshness(order.getFreshness()/2);
+			    Tools.placeOnShelf(order, shelf,  actions, timestamp, cooler, heater);
+			} 
 				} else {
 					  Tools.placeOnShelf(order, shelf,  actions, timestamp, cooler, heater);
 				}
@@ -117,16 +116,7 @@ public class Main implements Runnable {
 			}
 			executor.shutdown();
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-			
-			
-		/*	for(Action a : actions) {
-				   System.out.println(a);
-			} */
-  } catch (InterruptedException e) {
-	// TODO Auto-generated catch block
-	e.printStackTrace();
-  } 
- 
+	
 
       String result = client.solveProblem(problem.getTestId(), rate, min, max, actions);
       LOGGER.info("Result: {}", result);
