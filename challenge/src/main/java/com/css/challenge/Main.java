@@ -120,7 +120,7 @@ public class Main implements Runnable {
 		}
 	}
    
-	private synchronized void placeOrder(Order order, Map<String, Order> heater, Map<String, Order> cooler,
+	private void placeOrder(Order order, Map<String, Order> heater, Map<String, Order> cooler,
 			PriorityBlockingQueue<Order> shelf, ExecutorService executor, List<Action> actions) {
 		Instant timestamp = Instant.now();
 		order.setTimestamp(timestamp);
@@ -155,7 +155,7 @@ public class Main implements Runnable {
 		}
 	}
   
-	private  String pickUpOrderEntry(Order order, Duration min, Duration max, List<Action> actions,
+	private String pickUpOrderEntry(Order order, Duration min, Duration max, List<Action> actions,
 		
 		Map<String, Order> cooler, Map<String, Order> heater, PriorityBlockingQueue<Order> shelf) {
 		try {
