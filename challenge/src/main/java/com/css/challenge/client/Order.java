@@ -30,6 +30,7 @@ public class Order {
     this.temp = temp;
     this.price = price;
     this.freshness = freshness;
+    storage = "";
   }
 
   static List<Order> parse(String json) throws JsonProcessingException {

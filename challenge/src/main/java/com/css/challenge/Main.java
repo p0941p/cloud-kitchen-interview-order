@@ -13,6 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Level;
 import org.slf4j.Logger;
@@ -69,10 +71,10 @@ public class Main implements Runnable {
 			Comparator<Order> comparator = new DurationComparator();
 			Map<String, Order> heater = new ConcurrentHashMap<>();
 			Map<String, Order> cooler = new ConcurrentHashMap<>();
-			PriorityQueue<Order> shelf = new PriorityBlockingQueue<>(12, comparator);
-			// ExecutorService executor = Executors.newFixedThreadPool(20);
-			ExecutorService executor = Executors.newCachedThreadPool();
-
+			PriorityBlockingQueue<Order> shelf = new PriorityBlockingQueue<>(12, comparator);
+			ExecutorService executor = Executors.newFixedThreadPool(20);
+			// ExecutorService executor = Executors.newCachedThreadPool();
+			// ScheduledExecutorService executor = Executors.newScheduledThreadPool(20);
 			List<Action> actions = new ArrayList<>();
 			for (Order order : problem.getOrders()) {
 				LOGGER.info("Received: {}", order);
@@ -80,40 +82,43 @@ public class Main implements Runnable {
 				// Action.COOLER));
 			}
 
-	//		for (Order order : problem.getOrders()) {
-	//			placeOrder(order, heater, cooler, shelf, executor, actions);
-	//		}
-	//		executor.shutdown();
-	//		executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-			
-			for (Order o : problem.getOrders()) {			
+			// for (Order order : problem.getOrders()) {
+			// placeOrder(order, heater, cooler, shelf, executor, actions);
+			// }
+			// executor.shutdown();
+			// executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+			List<CompletableFuture<?>> placeFutures = new ArrayList<>();
+			for (Order o : problem.getOrders()) {
+				long delay = rate.getSeconds() / 2;
+				Runnable placeOrders = () -> placeOrder(o, heater, cooler, shelf, actions);
+				Runnable pickOrders = () -> pickUpOrder(actions, cooler, heater, o, shelf);
+				// executor.schedule(placeOrders, delay, TimeUnit.SECONDS);
+				CompletableFuture<?> placeFuture = CompletableFuture.runAsync(placeOrders,executor).thenRunAsync(pickOrders,executor);
+				placeFutures.add(placeFuture);
+				
+				//CompletableFuture<?> placeFuture = CompletableFuture.runAsync(placeOrders,executor);
 
-			Runnable placeOrders = () -> placeOrder(o,heater,cooler,shelf,actions);
-			Runnable pickOrders = () -> pickUpOrder( actions, cooler, heater, o, shelf);
-			CompletableFuture placeFuture = CompletableFuture.runAsync(pickOrders).thenRunAsync(pickOrders); 
-			
-			
-			
-			try {
-				Thread.sleep(rate);
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
-				LOGGER.error(e.getMessage());
+				try {
+					Thread.sleep(rate.toMillis());
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					LOGGER.error(e.getMessage());
+				}
 			}
+            CompletableFuture.allOf(placeFutures.toArray(new CompletableFuture[0])).join();
+			for(Action a: actions) {
+				System.out.println(a);
 			}
-			
-			
-			
 			String result = client.solveProblem(problem.getTestId(), rate, min, max, actions);
 			LOGGER.info("Result: {}", result);
 
-		} catch (IOException | InterruptedException e) {
+		} catch (IOException e) {
 			LOGGER.error("Simulation failed: {}", e.getMessage());
 		}
 	}
    
 	private synchronized void placeOrder(Order order, Map<String, Order> heater, Map<String, Order> cooler,
-		PriorityQueue<Order> shelf, List<Action> actions) {
+			PriorityBlockingQueue<Order> shelf, List<Action> actions) {
 		Instant timestamp = Instant.now();
 		order.setTimestamp(timestamp);
 
@@ -127,6 +132,13 @@ public class Main implements Runnable {
 			}
 		} else {
 			Tools.placeOnShelf(order, shelf, actions, timestamp, cooler, heater);
+		}
+		
+		try {
+			Thread.sleep(min.toMillis());
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			LOGGER.error(e.getMessage());
 		}
 	//	Callable<String> pickOrders = () -> pickUpOrderEntry(order, min, max, actions, cooler, heater, shelf);
 
@@ -151,7 +163,7 @@ public class Main implements Runnable {
 	
 
 	private synchronized void pickUpOrder( List<Action> actions, Map<String, Order> cooler,
-			Map<String, Order> heater, Order order, PriorityQueue<Order> shelf) {
+			Map<String, Order> heater, Order order, PriorityBlockingQueue<Order> shelf) {
 		Instant timestamp = Instant.now();
 		Action action;
 		if (!Tools.isFresh(order)) {
