@@ -88,7 +88,7 @@ public class Main implements Runnable {
 			
 	
 			ExecutorService executor = Executors.newFixedThreadPool(20);
-			ExecutorService executor2 = Executors.newCachedThreadPool();
+			//ExecutorService executor2 = Executors.newFixedThreadPool(20);
 
 			List<Action> actions = new ArrayList<>();
 			for (Order order : problem.getOrders()) {
@@ -98,24 +98,25 @@ public class Main implements Runnable {
 			}
 
 			for (Order order : problem.getOrders()) {
-							
-			//	Runnable placeOrders = () -> placeOrder(order, heater, cooler, shelf, executor, actions);
-			//	Future result = executor.submit(placeOrders);
-				  executor.submit(() -> {
-		                try {
-		                	placeOrder(order, heater, cooler, shelf, executor2, actions);
-		                } catch (Exception e) {
-		                    System.err.println( e.getMessage());
-		                }
-		            });
-		        }
-			
+/*
+				// Runnable placeOrders = () -> placeOrder(order, heater, cooler, shelf,
+				// executor, actions);
+				// Future result = executor.submit(placeOrders);
+				executor.submit(() -> {
+					try {
+						placeOrder(order, heater, cooler, shelf, executor, actions);
+					} catch (Exception e) {
+						System.err.println(e.getMessage());
+					}
+				});
+*/				
+				placeOrder(order, heater, cooler, shelf, executor, actions);
+				
+			}
 			executor.shutdown();
+
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 			
-			executor2.shutdown();
-			executor2.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-            
 			for(Action a: actions) {
 				System.out.println(a);
 			}
@@ -132,7 +133,7 @@ public class Main implements Runnable {
 			PriorityBlockingQueue<Order> shelf, ExecutorService executor, List<Action> actions) {
 		Instant timestamp = Instant.now();
 		order.setTimestamp(timestamp);
-
+	    ExecutorService pickExecutor = Executors.newSingleThreadExecutor();
 		if (!order.getTemp().equals("room")) {
 			Map<String, Order> coolerOrHeater = (order.getTemp().equals("hot")) ? heater : cooler;
 			int size = coolerOrHeater.size();
@@ -146,8 +147,15 @@ public class Main implements Runnable {
 			Tools.placeOnShelf(order, shelf, actions, timestamp, cooler, heater);
 		}
 		Callable<String> pickOrders = () -> pickUpOrderEntry(order, min, max, actions, cooler, heater, shelf);
-
 		Future<String> result = executor.submit(pickOrders);
+		
+		pickExecutor.shutdown();
+		try {
+			pickExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		try {
 			Thread.sleep(rate);
 		} catch (InterruptedException e) {
