@@ -1,5 +1,23 @@
 package com.css.challenge;
 
+import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.PriorityBlockingQueue;
+
+import org.apache.log4j.Level;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.css.challenge.client.Action;
 import com.css.challenge.client.Client;
 import com.css.challenge.client.Order;
@@ -7,30 +25,6 @@ import com.css.challenge.client.Problem;
 import com.css.challenge.utils.DurationComparator;
 import com.css.challenge.utils.Tools;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import org.apache.log4j.Level;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -73,9 +67,9 @@ public class Main implements Runnable {
 
 			// ------ Execution harness logic goes here using rate, min and max ----
 			Comparator<Order> comparator = new DurationComparator();
-			Map<String, Order> heater = new HashMap<>();
-			Map<String, Order> cooler = new HashMap<>();
-			PriorityQueue<Order> shelf = new PriorityQueue<>(12, comparator);
+			Map<String, Order> heater = new ConcurrentHashMap<>();
+			Map<String, Order> cooler = new ConcurrentHashMap<>();
+			PriorityQueue<Order> shelf = new PriorityBlockingQueue<>(12, comparator);
 			// ExecutorService executor = Executors.newFixedThreadPool(20);
 			ExecutorService executor = Executors.newCachedThreadPool();
 
@@ -91,13 +85,14 @@ public class Main implements Runnable {
 	//		}
 	//		executor.shutdown();
 	//		executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-			Order order;
-			for (Order o : problem.getOrders()) {
 			
-			order = o;	
-			Runnable pickOrders = () -> placeOrder(order,heater,cooler,shelf,actions);
-			CompletableFuture completableFuture = CompletableFuture.runAsync() -> {pickOrders
-			}); 
+			for (Order o : problem.getOrders()) {			
+
+			Runnable placeOrders = () -> placeOrder(o,heater,cooler,shelf,actions);
+			Runnable pickOrders = () -> pickUpOrder( actions, cooler, heater, o, shelf);
+			CompletableFuture placeFuture = CompletableFuture.runAsync(pickOrders).thenRunAsync(pickOrders); 
+			
+			
 			
 			try {
 				Thread.sleep(rate);
@@ -117,7 +112,7 @@ public class Main implements Runnable {
 		}
 	}
    
-	private void placeOrder(Order order, Map<String, Order> heater, Map<String, Order> cooler,
+	private synchronized void placeOrder(Order order, Map<String, Order> heater, Map<String, Order> cooler,
 		PriorityQueue<Order> shelf, List<Action> actions) {
 		Instant timestamp = Instant.now();
 		order.setTimestamp(timestamp);
@@ -138,7 +133,7 @@ public class Main implements Runnable {
 	//	Future<String> result = executor.submit(pickOrders);
 		
 	}
-  
+  /*
 	private String pickUpOrderEntry(Order order, Duration min, Duration max, List<Action> actions,
 		
 		Map<String, Order> cooler, Map<String, Order> heater, PriorityQueue<Order> shelf) {
@@ -152,12 +147,12 @@ public class Main implements Runnable {
 		}
 		return "pickup thread of " + order + "is done";
 	}
-	
+	*/
 	
 
-	private void pickUpOrder(Instant timestamp, List<Action> actions, Map<String, Order> cooler,
+	private synchronized void pickUpOrder( List<Action> actions, Map<String, Order> cooler,
 			Map<String, Order> heater, Order order, PriorityQueue<Order> shelf) {
-
+		Instant timestamp = Instant.now();
 		Action action;
 		if (!Tools.isFresh(order)) {
 			if (order.getStorage().equals("heater")) {
