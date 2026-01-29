@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -85,12 +86,29 @@ public class Main implements Runnable {
 				// Action.COOLER));
 			}
 
-			for (Order order : problem.getOrders()) {
-				placeOrder(order, heater, cooler, shelf, executor, actions);
+	//		for (Order order : problem.getOrders()) {
+	//			placeOrder(order, heater, cooler, shelf, executor, actions);
+	//		}
+	//		executor.shutdown();
+	//		executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+			Order order;
+			for (Order o : problem.getOrders()) {
+			
+			order = o;	
+			Runnable pickOrders = () -> placeOrder(order,heater,cooler,shelf,actions);
+			CompletableFuture completableFuture = CompletableFuture.runAsync() -> {pickOrders
+			}); 
+			
+			try {
+				Thread.sleep(rate);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				LOGGER.error(e.getMessage());
 			}
-			executor.shutdown();
-			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-
+			}
+			
+			
+			
 			String result = client.solveProblem(problem.getTestId(), rate, min, max, actions);
 			LOGGER.info("Result: {}", result);
 
@@ -100,7 +118,7 @@ public class Main implements Runnable {
 	}
    
 	private void placeOrder(Order order, Map<String, Order> heater, Map<String, Order> cooler,
-		PriorityQueue<Order> shelf, ExecutorService executor, List<Action> actions) {
+		PriorityQueue<Order> shelf, List<Action> actions) {
 		Instant timestamp = Instant.now();
 		order.setTimestamp(timestamp);
 
@@ -115,15 +133,10 @@ public class Main implements Runnable {
 		} else {
 			Tools.placeOnShelf(order, shelf, actions, timestamp, cooler, heater);
 		}
-		Callable<String> pickOrders = () -> pickUpOrderEntry(order, min, max, actions, cooler, heater, shelf);
+	//	Callable<String> pickOrders = () -> pickUpOrderEntry(order, min, max, actions, cooler, heater, shelf);
 
-		Future<String> result = executor.submit(pickOrders);
-		try {
-			Thread.sleep(rate);
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			LOGGER.error(e.getMessage());
-		}
+	//	Future<String> result = executor.submit(pickOrders);
+		
 	}
   
 	private String pickUpOrderEntry(Order order, Duration min, Duration max, List<Action> actions,
