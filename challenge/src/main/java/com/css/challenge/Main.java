@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -87,17 +88,18 @@ public class Main implements Runnable {
 			// }
 			// executor.shutdown();
 			// executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-			List<CompletableFuture<?>> placeFutures = new ArrayList<>();
+			List<CompletableFuture<?>> pickFutures = new ArrayList<>();
 			for (Order o : problem.getOrders()) {
-				long delay = rate.getSeconds() / 2;
+				//long delay = rate.getSeconds();
+				/*
 				Runnable placeOrders = () -> placeOrder(o, heater, cooler, shelf, actions);
 				Runnable pickOrders = () -> pickUpOrder(actions, cooler, heater, o, shelf);
 				// executor.schedule(placeOrders, delay, TimeUnit.SECONDS);
 				CompletableFuture<?> placeFuture = CompletableFuture.runAsync(placeOrders,executor).thenRunAsync(pickOrders,executor);
 				placeFutures.add(placeFuture);
-				
+				*/
 				//CompletableFuture<?> placeFuture = CompletableFuture.runAsync(placeOrders,executor);
-
+				placeOrder(o, heater, cooler, shelf, actions, executor, pickFutures);
 				try {
 					Thread.sleep(rate.toMillis());
 				} catch (InterruptedException e) {
@@ -105,7 +107,8 @@ public class Main implements Runnable {
 					LOGGER.error(e.getMessage());
 				}
 			}
-            CompletableFuture.allOf(placeFutures.toArray(new CompletableFuture[0])).join();
+			
+            CompletableFuture.allOf(pickFutures.toArray(new CompletableFuture[0])).join();
 			for(Action a: actions) {
 				System.out.println(a);
 			}
@@ -118,7 +121,7 @@ public class Main implements Runnable {
 	}
    
 	private synchronized void placeOrder(Order order, Map<String, Order> heater, Map<String, Order> cooler,
-			PriorityBlockingQueue<Order> shelf, List<Action> actions) {
+			PriorityBlockingQueue<Order> shelf, List<Action> actions, ExecutorService executor, List<CompletableFuture<?>> pickFutures) {
 		Instant timestamp = Instant.now();
 		order.setTimestamp(timestamp);
 
@@ -140,8 +143,9 @@ public class Main implements Runnable {
 			Thread.currentThread().interrupt();
 			LOGGER.error(e.getMessage());
 		}
-	//	Callable<String> pickOrders = () -> pickUpOrderEntry(order, min, max, actions, cooler, heater, shelf);
-
+		Runnable pickOrders = () -> pickUpOrder(actions, cooler, heater,order, shelf);
+		CompletableFuture<?> pickFuture = CompletableFuture.runAsync(pickOrders,executor);
+		pickFutures.add(pickFuture);
 	//	Future<String> result = executor.submit(pickOrders);
 		
 	}
