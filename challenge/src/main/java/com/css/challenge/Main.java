@@ -16,15 +16,20 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Level;
@@ -44,10 +49,10 @@ public class Main implements Runnable {
   }
 
   @Option(names = "--endpoint", description = "Problem server endpoint")
-  String endpoint = "https://api.cloudkitchens.com";
+  static String endpoint = "https://api.cloudkitchens.com";
 
   @Option(names = "--auth", description = "Authentication token (required)")
-  String auth = "";
+  static String auth = "";
 
   @Option(names = "--name", description = "Problem name. Leave blank (optional)")
   String name = "";
@@ -72,11 +77,18 @@ public class Main implements Runnable {
 
 			// ------ Execution harness logic goes here using rate, min and max ----
 			Comparator<Order> comparator = new DurationComparator();
-			Map<String, Order> heater = new HashMap<>();
-			Map<String, Order> cooler = new HashMap<>();
-			PriorityQueue<Order> shelf = new PriorityQueue<>(12, comparator);
-			// ExecutorService executor = Executors.newFixedThreadPool(20);
-			ExecutorService executor = Executors.newCachedThreadPool();
+			//Map<String, Order> heater = new ConcurrentHashMap<>();
+			//Map<String, Order> cooler = new ConcurrentHashMap<>();
+			Map<String, Order> heater = Collections.synchronizedMap(new HashMap<>());
+			Map<String, Order> cooler = Collections.synchronizedMap(new HashMap<>());
+
+			
+			PriorityBlockingQueue<Order> shelf = new PriorityBlockingQueue<>(12, comparator);
+			
+			
+	
+			ExecutorService executor = Executors.newFixedThreadPool(20);
+			ExecutorService executor2 = Executors.newCachedThreadPool();
 
 			List<Action> actions = new ArrayList<>();
 			for (Order order : problem.getOrders()) {
@@ -86,11 +98,28 @@ public class Main implements Runnable {
 			}
 
 			for (Order order : problem.getOrders()) {
-				placeOrder(order, heater, cooler, shelf, executor, actions);
-			}
+							
+			//	Runnable placeOrders = () -> placeOrder(order, heater, cooler, shelf, executor, actions);
+			//	Future result = executor.submit(placeOrders);
+				  executor.submit(() -> {
+		                try {
+		                	placeOrder(order, heater, cooler, shelf, executor2, actions);
+		                } catch (Exception e) {
+		                    System.err.println( e.getMessage());
+		                }
+		            });
+		        }
+			
 			executor.shutdown();
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-
+			
+			executor2.shutdown();
+			executor2.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+            
+			for(Action a: actions) {
+				System.out.println(a);
+			}
+			
 			String result = client.solveProblem(problem.getTestId(), rate, min, max, actions);
 			LOGGER.info("Result: {}", result);
 
@@ -99,14 +128,15 @@ public class Main implements Runnable {
 		}
 	}
    
-	private void placeOrder(Order order, Map<String, Order> heater, Map<String, Order> cooler,
-		PriorityQueue<Order> shelf, ExecutorService executor, List<Action> actions) {
+	private synchronized void placeOrder(Order order, Map<String, Order> heater, Map<String, Order> cooler,
+			PriorityBlockingQueue<Order> shelf, ExecutorService executor, List<Action> actions) {
 		Instant timestamp = Instant.now();
 		order.setTimestamp(timestamp);
 
 		if (!order.getTemp().equals("room")) {
 			Map<String, Order> coolerOrHeater = (order.getTemp().equals("hot")) ? heater : cooler;
-			if (coolerOrHeater.size() < 6) {
+			int size = coolerOrHeater.size();
+			if (size < 6) {
 				Tools.placeOnHeaterCoolerOnly(order, coolerOrHeater, actions, timestamp);
 			} else {
 				order.setFreshness(order.getFreshness() / 2);
@@ -126,9 +156,9 @@ public class Main implements Runnable {
 		}
 	}
   
-	private String pickUpOrderEntry(Order order, Duration min, Duration max, List<Action> actions,
+	private  String pickUpOrderEntry(Order order, Duration min, Duration max, List<Action> actions,
 		
-		Map<String, Order> cooler, Map<String, Order> heater, PriorityQueue<Order> shelf) {
+		Map<String, Order> cooler, Map<String, Order> heater, PriorityBlockingQueue<Order> shelf) {
 		try {
 			Thread.sleep(min.toMillis());
 			Instant timestamp = Instant.now();
@@ -143,7 +173,7 @@ public class Main implements Runnable {
 	
 
 	private void pickUpOrder(Instant timestamp, List<Action> actions, Map<String, Order> cooler,
-			Map<String, Order> heater, Order order, PriorityQueue<Order> shelf) {
+			Map<String, Order> heater, Order order, PriorityBlockingQueue<Order> shelf) {
 
 		Action action;
 		if (!Tools.isFresh(order)) {
