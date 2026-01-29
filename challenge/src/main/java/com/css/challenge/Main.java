@@ -71,9 +71,7 @@ public class Main implements Runnable {
 			Map<String, Order> heater = new ConcurrentHashMap<>();
 			Map<String, Order> cooler = new ConcurrentHashMap<>();
 			//Map<String, Order> heater = Collections.synchronizedMap(new HashMap<>());
-			//Map<String, Order> cooler = Collections.synchronizedMap(new HashMap<>());
-
-			
+			//Map<String, Order> cooler = Collections.synchronizedMap(new HashMap<>());		
 			PriorityBlockingQueue<Order> shelf = new PriorityBlockingQueue<>(12, comparator);
 			
 			
@@ -84,25 +82,10 @@ public class Main implements Runnable {
 			List<Action> actions = new ArrayList<>();
 			for (Order order : problem.getOrders()) {
 				LOGGER.info("Received: {}", order);
-				// actions.add(new Action(Instant.now(), order.getId(), Action.PLACE,
-				// Action.COOLER));
 			}
 
 			for (Order order : problem.getOrders()) {
-/*
-				// Runnable placeOrders = () -> placeOrder(order, heater, cooler, shelf,
-				// executor, actions);
-				// Future result = executor.submit(placeOrders);
-				executor.submit(() -> {
-					try {
-						placeOrder(order, heater, cooler, shelf, executor, actions);
-					} catch (Exception e) {
-						System.err.println(e.getMessage());
-					}
-				});
-*/				
-				placeOrder(order, heater, cooler, shelf, executor, actions);
-				
+				placeOrder(order, heater, cooler, shelf, executor, actions);				
 			}
 			executor.shutdown();
 
@@ -110,11 +93,9 @@ public class Main implements Runnable {
 			
 			for(Action a: actions) {
 				System.out.println(a);
-			}
-			
+			}			
 			String result = client.solveProblem(problem.getTestId(), rate, min, max, actions);
 			LOGGER.info("Result: {}", result);
-
 		} catch (IOException | InterruptedException e) {
 			LOGGER.error("Simulation failed: {}", e.getMessage());
 		}

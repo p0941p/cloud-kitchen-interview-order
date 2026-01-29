@@ -18,9 +18,7 @@ public class Tools {
     	heap.poll();
     	heap.offer(o);
     	Action actionPlace = new Action(epochTime, o.getId(), "place", "shelf");
-    	actions.add(actionPlace);
-    	
-    	
+    	actions.add(actionPlace);   	
     }
     
     public static boolean isFresh(Order o) {
@@ -59,6 +57,7 @@ public class Tools {
 			}
 		}
     }
+    
     public static void placeOnHeaterCoolerOnly(Order o,Map<String, Order> coolerOrHeater,  List<Action> actions,Instant timestamp) {
     	String target = (o.getTemp().equals("hot"))? "heater" : "cooler"; 
 		Action action = new Action(timestamp, o.getId(), "place", target);
