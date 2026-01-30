@@ -70,20 +70,14 @@ public class Main implements Runnable {
 			Comparator<Order> comparator = new DurationComparator();
 			Map<String, Order> heater = new ConcurrentHashMap<>();
 			Map<String, Order> cooler = new ConcurrentHashMap<>();
-			//Map<String, Order> heater = Collections.synchronizedMap(new HashMap<>());
-			//Map<String, Order> cooler = Collections.synchronizedMap(new HashMap<>());		
 			PriorityBlockingQueue<Order> shelf = new PriorityBlockingQueue<>(12, comparator);
-			
-			
-	
 			ExecutorService executor = Executors.newFixedThreadPool(20);
-			//ExecutorService executor2 = Executors.newFixedThreadPool(20);
 
 			List<Action> actions = new ArrayList<>();
 			for (Order order : problem.getOrders()) {
 				LOGGER.info("Received: {}", order);
 			}
-
+			
 			for (Order order : problem.getOrders()) {
 				placeOrder(order, heater, cooler, shelf, executor, actions);				
 			}
