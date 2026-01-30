@@ -24,7 +24,7 @@ public class ShelfStorage {
 		this.sortedSet = new TreeSet<>(comparator);
 	   }  
 	   
-	   public void add(Order order) {
+	   public synchronized void add(Order order) {
 		   
 		   if(order.getTemp().equals("hot") || order.getTemp().equals("cold") ) {
 			   hotOrCold.put(order.getId(), order);
@@ -32,7 +32,7 @@ public class ShelfStorage {
 		   sortedSet.add(order);
 	   }
 	   
-		public Order removeHotOrCold() {
+		public synchronized Order removeHotOrCold() {
 
 			Order order = null;
 			if (!hotOrCold.isEmpty()) {
@@ -42,7 +42,7 @@ public class ShelfStorage {
 			return order;
 		}
 
-		public void discard() {
+		public synchronized void discard() {
 			Order order = sortedSet.first();
 			hotOrCold.remove(order.getId());
 			sortedSet.remove(order);
