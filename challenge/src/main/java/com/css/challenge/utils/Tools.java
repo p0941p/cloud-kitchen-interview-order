@@ -32,9 +32,6 @@ public class Tools {
     
     public static boolean isFresh(Order o) {
     	
-    	//LocalDateTime expiration = o.getTimestamp().plusSeconds(o.getFreshness());
-    	//if(LocalDateTime.now().isAfter(expiration)) {
-    	
     	Instant expiration = o.getTimestamp().plusSeconds(o.getFreshness());
     	
     	if(Instant.now().isAfter(expiration)) {

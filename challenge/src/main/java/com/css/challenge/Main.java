@@ -115,8 +115,7 @@ public class Main implements Runnable {
 		try {
 			pickExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LOGGER.error(e.getMessage());
 		}
 		try {
 			Thread.sleep(rate);
@@ -130,9 +129,10 @@ public class Main implements Runnable {
 		
 		Map<String, Order> cooler, Map<String, Order> heater, PriorityBlockingQueue<Order> shelf) {
 		try {
-			//Thread.sleep(min.toMillis());
+			//Pickup Interval
 			long interval = Tools.getInterval(max, min);
 			Thread.sleep(interval);
+			
 			Instant timestamp = Instant.now();
 			pickUpOrder(timestamp, actions, cooler, heater, order, shelf);
 		} catch (InterruptedException e) {
