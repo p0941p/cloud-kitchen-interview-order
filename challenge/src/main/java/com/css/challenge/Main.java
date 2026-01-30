@@ -80,7 +80,14 @@ public class Main implements Runnable {
 			
 			for (Order order : problem.getOrders()) {
 				// Place Order
-				placeOrder(order, heater, cooler, shelf, executor, actions);				
+				placeOrder(order, heater, cooler, shelf, executor, actions);		
+				
+				try {
+					Thread.sleep(rate);
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					LOGGER.error(e.getMessage());
+				}
 			}
 			executor.shutdown();
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
@@ -94,6 +101,7 @@ public class Main implements Runnable {
    
 	private void placeOrder(Order order, Map<String, Order> heater, Map<String, Order> cooler,
 			PriorityBlockingQueue<Order> shelf, ExecutorService executor, List<Action> actions) {
+		
 		Instant timestamp = Instant.now();
 		order.setTimestamp(timestamp);
 	    ExecutorService pickExecutor = Executors.newSingleThreadExecutor();
@@ -116,12 +124,6 @@ public class Main implements Runnable {
 		try {
 			pickExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 		} catch (InterruptedException e) {
-			LOGGER.error(e.getMessage());
-		}
-		try {
-			Thread.sleep(rate);
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
 			LOGGER.error(e.getMessage());
 		}
 	}
