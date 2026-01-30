@@ -3,8 +3,8 @@ package com.css.challenge.utils;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 import com.css.challenge.client.Order;
 
@@ -21,7 +21,7 @@ public class ShelfStorage {
 		super();
 		Comparator<Order> comparator = new DurationComparator();
 		this.hotOrCold = new ConcurrentHashMap<>();
-		this.sortedSet = new TreeSet<>(comparator);
+		this.sortedSet = new ConcurrentSkipListSet<>(comparator);
 	   }  
 	   
 	   public synchronized void add(Order order) {
@@ -32,7 +32,7 @@ public class ShelfStorage {
 		   sortedSet.add(order);
 	   }
 	   
-		public synchronized Order removeHotOrCold() {
+	   public synchronized Order removeHotOrCold() {
 
 			Order order = null;
 			if (!hotOrCold.isEmpty()) {
@@ -41,15 +41,25 @@ public class ShelfStorage {
 			}
 			return order;
 		}
-
-		public synchronized void discard() {
-			Order order = sortedSet.first();
+	   
+		public synchronized void removeOrder(Order order) {
 			hotOrCold.remove(order.getId());
 			sortedSet.remove(order);
 		}
+        
+		public synchronized Order discard() {
+			Order order = null;
+			order = sortedSet.first();
+			removeOrder(order);
+			return order;
+		}
  
-		public boolean hasHotOrCold() {
+		public synchronized boolean hasHotOrCold() {
 			return !hotOrCold.isEmpty();
+		}
+		
+		public synchronized int size() {
+			return sortedSet.size();
 		}
 		  	   
 }

@@ -24,6 +24,7 @@ import com.css.challenge.client.Client;
 import com.css.challenge.client.Order;
 import com.css.challenge.client.Problem;
 import com.css.challenge.utils.DurationComparator;
+import com.css.challenge.utils.ShelfStorage;
 import com.css.challenge.utils.Tools;
 
 import picocli.CommandLine;
@@ -72,7 +73,8 @@ public class Main implements Runnable {
 			Comparator<Order> comparator = new DurationComparator();
 			Map<String, Order> heater = new ConcurrentHashMap<>();
 			Map<String, Order> cooler = new ConcurrentHashMap<>();
-			PriorityBlockingQueue<Order> shelf = new PriorityBlockingQueue<>(12, comparator);
+			//PriorityBlockingQueue<Order> shelf = new PriorityBlockingQueue<>(12, comparator);
+			ShelfStorage shelf = new ShelfStorage();
 			
 			List<Action> actions = new ArrayList<>();
 			for (Order order : problem.getOrders()) {
@@ -101,7 +103,7 @@ public class Main implements Runnable {
 			executor.shutdownNow();
 		}
 	}
-   
+   /*
 	private void placeOrder(Order order, Map<String, Order> heater, Map<String, Order> cooler,
 			PriorityBlockingQueue<Order> shelf, ExecutorService executor, List<Action> actions) {
 		
@@ -124,10 +126,34 @@ public class Main implements Runnable {
 		Callable<String> pickOrders = () -> pickUpOrderEntry(order, min, max, actions, cooler, heater, shelf);
 		Future<String> result = executor.submit(pickOrders);
 	}
+  */
+  private void placeOrder(Order order, Map<String, Order> heater, Map<String, Order> cooler,
+			ShelfStorage shelf, ExecutorService executor, List<Action> actions) {
+		
+		Instant timestamp = Instant.now();
+		order.setTimestamp(timestamp);
+	  
+		if (!order.getTemp().equals("room")) {
+			Map<String, Order> coolerOrHeater = (order.getTemp().equals("hot")) ? heater : cooler;
+			int size = coolerOrHeater.size();
+			if (size < 6) {
+				Tools.placeOnHeaterCoolerOnly(order, coolerOrHeater, actions, timestamp);
+			} else {
+				// Heater or Cooler is full, place on shelf and deduct freshness time
+				order.setFreshness(order.getFreshness() / 2);
+				Tools.placeOnShelfFromHC(order, shelf, actions, timestamp, cooler, heater);
+			}
+		} else {
+			Tools.placeOnShelf(order, shelf, actions, timestamp, cooler, heater);
+		}
+		Callable<String> pickOrders = () -> pickUpOrderEntry(order, min, max, actions, cooler, heater, shelf);
+		Future<String> result = executor.submit(pickOrders);
+	}
+  
   
 	private String pickUpOrderEntry(Order order, Duration min, Duration max, List<Action> actions,
 		
-		Map<String, Order> cooler, Map<String, Order> heater, PriorityBlockingQueue<Order> shelf) {
+		Map<String, Order> cooler, Map<String, Order> heater, ShelfStorage shelf) {
 		try {
 			//Wait for Pickup Interval
 			long interval = Tools.getInterval(max, min);
@@ -145,7 +171,7 @@ public class Main implements Runnable {
 	
 
 	private void pickUpOrder(Instant timestamp, List<Action> actions, Map<String, Order> cooler,
-			Map<String, Order> heater, Order order, PriorityBlockingQueue<Order> shelf) {
+			Map<String, Order> heater, Order order, ShelfStorage shelf) {
 
 		Action action;
 		if (!Tools.isFresh(order)) {
@@ -158,7 +184,7 @@ public class Main implements Runnable {
 				action = new Action(timestamp, order.getId(), "discard", "cooler");
 				System.out.println("Action: " + action);
 			} else {		
-				shelf.remove(order);
+				shelf.removeOrder(order);
 				action = new Action(timestamp, order.getId(), "discard", "shelf");
 				System.out.println("Action: " + action);
 			}
@@ -172,7 +198,7 @@ public class Main implements Runnable {
 				action = new Action(timestamp, order.getId(), "pickup", "cooler");
 				System.out.println("Action: " + action);
 			} else {
-				shelf.remove(order);
+				shelf.removeOrder(order);
 				action = new Action(timestamp, order.getId(), "pickup", "shelf");
 				System.out.println("Action: " + action);
 			}
