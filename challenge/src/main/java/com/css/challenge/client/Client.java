@@ -3,16 +3,22 @@ package com.css.challenge.client;
 import static simplehttp.HeaderList.headers;
 import static simplehttp.HeaderPair.header;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.net.URL;
 import java.time.Duration;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import simplehttp.*;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import simplehttp.HttpClient;
+import simplehttp.HttpClients;
+import simplehttp.HttpResponse;
+import simplehttp.UnencodedStringMessage;
 
 /** Client is a client for fetching and solving challenge test problems. */
 public class Client {

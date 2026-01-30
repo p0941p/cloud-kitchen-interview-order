@@ -12,7 +12,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Level;
@@ -92,15 +91,16 @@ public class Main implements Runnable {
 					LOGGER.error(e.getMessage());
 				}
 			}
+			
 			executor.shutdown();
-			executor.awaitTermination(200, TimeUnit.SECONDS);
+			executor.awaitTermination(2000, TimeUnit.SECONDS);
 		
 			String result = client.solveProblem(problem.getTestId(), rate, min, max, actions);
 			LOGGER.info("Result: {}", result);
 		} catch (IOException | InterruptedException e) {
 			LOGGER.error("Simulation failed: {}", e.getMessage());
 		} finally {
-			executor.shutdownNow();
+			//executor.shutdownNow();
 		}
 	}
    /*
@@ -177,33 +177,37 @@ public class Main implements Runnable {
 		if (!Tools.isFresh(order)) {
 			if (order.getStorage().equals("heater")) {
 				heater.remove(order.getId());
-				action = new Action(timestamp, order.getId(), "discard", "heater");
-				System.out.println("Action: " + action);
+				action = new Action(timestamp, order.getId(), "discard", "heater");		
 ;			} else if (order.getStorage().equals("cooler")) {		
 				cooler.remove(order.getId());
-				action = new Action(timestamp, order.getId(), "discard", "cooler");
-				System.out.println("Action: " + action);
+				action = new Action(timestamp, order.getId(), "discard", "cooler");				
 			} else {		
 				shelf.removeOrder(order);
-				action = new Action(timestamp, order.getId(), "discard", "shelf");
-				System.out.println("Action: " + action);
+				action = new Action(timestamp, order.getId(), "discard", "shelf");		
 			}
 		} else {
-			if (order.getStorage().equals("heater")) {			
+			if (order.getStorage().equals("heater")) {		
+				if(!heater.containsKey(order.getId())) {
+					System.out.println("*********************Heater MISSING " + order);
+				}
 				heater.remove(order.getId());
-				action = new Action(timestamp, order.getId(), "pickup", "heater");
-				System.out.println("Action: " + action);
+				action = new Action(timestamp, order.getId(), "pickup", "heater");			
 			} else if (order.getStorage().equals("cooler")) {
+				if(!cooler.containsKey(order.getId())) {
+					System.out.println("*********************Cooler MISSING " + order);
+				}
 				cooler.remove(order.getId());
-				action = new Action(timestamp, order.getId(), "pickup", "cooler");
-				System.out.println("Action: " + action);
+				action = new Action(timestamp, order.getId(), "pickup", "cooler");				
 			} else {
+				if(!(order.getStorage().equals("shelf") && shelf.contains(order))) {
+					System.out.println("*********************Shelf MISSING " + order);
+				}
 				shelf.removeOrder(order);
-				action = new Action(timestamp, order.getId(), "pickup", "shelf");
-				System.out.println("Action: " + action);
+				action = new Action(timestamp, order.getId(), "pickup", "shelf");				
 			}
 		}
 		actions.add(action);
+		System.out.println("Action: " + action);
 	}
 
 	public static void main(String[] args) {

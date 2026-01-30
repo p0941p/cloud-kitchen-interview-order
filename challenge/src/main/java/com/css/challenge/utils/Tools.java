@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.PriorityBlockingQueue;
 
 import com.css.challenge.client.Action;
 import com.css.challenge.client.Order;
@@ -31,12 +30,14 @@ public class Tools {
     */
     public static void discardNPlace(List<Action> actions, Instant epochTime, ShelfStorage shelf, Order order) {
     	Order discarded = shelf.discard();
-		if (discarded != null) {
+		//if (discarded != null) {
 			Action actionDiscard = new Action(epochTime, discarded.getId(), "discard", "shelf");
+			actions.add(actionDiscard);
 			System.out.println("Action: " + actionDiscard);
-		}
+//		}
 		shelf.add(order);
 		Action actionPlace = new Action(epochTime, order.getId(), "place", "shelf");
+		actions.add(actionPlace);
 		System.out.println("Action: " + actionPlace);
     }
 
@@ -71,10 +72,11 @@ public class Tools {
 		if (shelf.size() < 12) {
 			shelf.add(order);
 			Action action = new Action(epochTime, order.getId(), "place", "shelf");
+			actions.add(action);
 			System.out.println("Action: " + action);
 			// Add target to order storage
 			order.setStorage("shelf");
-			actions.add(action);
+			
 		} else {
 			Tools.discardNPlace(actions, epochTime, shelf, order);
 		}
@@ -113,19 +115,25 @@ public class Tools {
 			order.setStorage("shelf");
 			actions.add(action);
 		} else {
-			if (!order.getTemp().equals("room")) {
-				Map<String, Order> coolerOrHeater = (order.getTemp().equals("hot")) ? heater : cooler;
-				int size = coolerOrHeater.size();
-				if (size < 6) {
-					placeOnHeaterCoolerOnly(order, coolerOrHeater, actions, epochTime);
-				} else {
-					Tools.discardNPlace(actions, epochTime, shelf, order);
-				}
+			if (!order.getTemp().equals("room")) {		
+					if (shelf.moveHotOrCold(heater, cooler)) {
+						shelf.add(order);
+						
+						Action action = new Action(epochTime, order.getId(), "place", "shelf");
+						System.out.println("Action: " + action);
+						// Add target to order storage
+						order.setStorage("shelf");
+						actions.add(action);
+//					} else {
+//						Tools.discardNPlace(actions, epochTime, shelf, order);
+//					}	
+					}
 			} else {
 				Tools.discardNPlace(actions, epochTime, shelf, order);
 			}
-		}
+		}		
 	}
+	
     public static void placeOnHeaterCoolerOnly(Order o,Map<String, Order> coolerOrHeater,  List<Action> actions,Instant timestamp) {
     	coolerOrHeater.put(o.getId(), o);
     	String target = (o.getTemp().equals("hot"))? "heater" : "cooler"; 

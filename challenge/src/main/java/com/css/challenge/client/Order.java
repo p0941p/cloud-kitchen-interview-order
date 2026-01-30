@@ -1,13 +1,13 @@
 package com.css.challenge.client;
 
+import java.time.Instant;
+import java.util.List;
+import java.util.Objects;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.util.List;
 
 /** Order is a json-friendly representation of an order. */
 public class Order {
@@ -90,5 +90,24 @@ public class Order {
         + ", freshness:"
         + freshness
         + "}";
+  }
+
+  @Override
+  public int hashCode() {
+	return Objects.hash(freshness, id, name, price, storage, temp, timestamp);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+	if (this == obj)
+		return true;
+	if (obj == null)
+		return false;
+	if (getClass() != obj.getClass())
+		return false;
+	Order other = (Order) obj;
+	return freshness == other.freshness && Objects.equals(id, other.id) && Objects.equals(name, other.name)
+			&& price == other.price && Objects.equals(storage, other.storage) && Objects.equals(temp, other.temp)
+			&& Objects.equals(timestamp, other.timestamp);
   }
 }
