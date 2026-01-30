@@ -140,7 +140,8 @@ public class Main implements Runnable {
 		
 		Map<String, Order> cooler, Map<String, Order> heater, PriorityBlockingQueue<Order> shelf) {
 		try {
-			Thread.sleep(min.toMillis());
+			//Thread.sleep(min.toMillis());
+			Thread.sleep(7000);
 			Instant timestamp = Instant.now();
 			pickUpOrder(timestamp, actions, cooler, heater, order, shelf);
 		} catch (InterruptedException e) {
