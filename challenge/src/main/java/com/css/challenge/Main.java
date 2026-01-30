@@ -89,10 +89,7 @@ public class Main implements Runnable {
 			}
 			executor.shutdown();
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-			
-			for(Action a: actions) {
-				System.out.println(a);
-			}			
+		
 			String result = client.solveProblem(problem.getTestId(), rate, min, max, actions);
 			LOGGER.info("Result: {}", result);
 		} catch (IOException | InterruptedException e) {
@@ -141,7 +138,7 @@ public class Main implements Runnable {
 		try {
 			//Thread.sleep(min.toMillis());
 			long interval = Tools.getInterval(max, min);
-			Thread.sleep(8005);
+			Thread.sleep(interval);
 			Instant timestamp = Instant.now();
 			pickUpOrder(timestamp, actions, cooler, heater, order, shelf);
 		} catch (InterruptedException e) {
