@@ -88,7 +88,6 @@ public class Main implements Runnable {
 				placeOrder(order, heater, cooler, shelf, executor, actions);				
 			}
 			executor.shutdown();
-
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 			
 			for(Action a: actions) {
@@ -142,7 +141,7 @@ public class Main implements Runnable {
 		try {
 			//Thread.sleep(min.toMillis());
 			long interval = Tools.getInterval(max, min);
-			Thread.sleep(interval);
+			Thread.sleep(8005);
 			Instant timestamp = Instant.now();
 			pickUpOrder(timestamp, actions, cooler, heater, order, shelf);
 		} catch (InterruptedException e) {
@@ -162,23 +161,29 @@ public class Main implements Runnable {
 			if (order.getStorage().equals("heater")) {
 				heater.remove(order.getId());
 				action = new Action(timestamp, order.getId(), "discard", "heater");
-			} else if (order.getStorage().equals("cooler")) {		
+				System.out.println("Action: " + action);
+;			} else if (order.getStorage().equals("cooler")) {		
 				cooler.remove(order.getId());
 				action = new Action(timestamp, order.getId(), "discard", "cooler");
+				System.out.println("Action: " + action);
 			} else {		
 				shelf.remove(order);
 				action = new Action(timestamp, order.getId(), "discard", "shelf");
+				System.out.println("Action: " + action);
 			}
 		} else {
 			if (order.getStorage().equals("heater")) {			
 				heater.remove(order.getId());
 				action = new Action(timestamp, order.getId(), "pickup", "heater");
+				System.out.println("Action: " + action);
 			} else if (order.getStorage().equals("cooler")) {
 				cooler.remove(order.getId());
 				action = new Action(timestamp, order.getId(), "pickup", "cooler");
+				System.out.println("Action: " + action);
 			} else {
 				shelf.remove(order);
 				action = new Action(timestamp, order.getId(), "pickup", "shelf");
+				System.out.println("Action: " + action);
 			}
 		}
 		actions.add(action);

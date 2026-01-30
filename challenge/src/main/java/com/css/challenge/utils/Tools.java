@@ -12,13 +12,16 @@ import com.css.challenge.client.Order;
 
 public class Tools {
 
-    public static void discardNPlace(List<Action> actions, Instant epochTime, PriorityBlockingQueue<Order> heap, Order o) {
+    public static void discardNPlace(List<Action> actions, Instant epochTime, PriorityBlockingQueue<Order> heap, Order order) {
     	Order toBeDiscard = heap.peek();
-    	Action actionDiscard = new Action(epochTime, toBeDiscard.getId(), "discard", "shelf");
-    	actions.add(actionDiscard);
     	heap.poll();
-    	heap.offer(o);
-    	Action actionPlace = new Action(epochTime, o.getId(), "place", "shelf");
+    	heap.offer(order);
+    	Action actionDiscard = new Action(epochTime, toBeDiscard.getId(), "discard", "shelf");
+    	System.out.println("Action: " + actionDiscard); 
+    	actions.add(actionDiscard);
+    	Action actionPlace = new Action(epochTime, order.getId(), "place", "shelf");
+    	order.setStorage("shelf");
+    	System.out.println("Action: " + actionPlace); 
     	actions.add(actionPlace);   	
     }
     
@@ -42,11 +45,11 @@ public class Tools {
   
     public static void placeOnShelf(Order o, PriorityBlockingQueue<Order> shelf, List<Action> actions, Instant epochTime,Map<String, Order> cooler, Map<String, Order> heater) {
     	if(shelf.size() < 12) {
+    		shelf.add(o);
     		Action action = new Action(epochTime, o.getId(), "place", "shelf");
-			shelf.add(o);
-    		//storageLookUp.put(o.getId(), "shelf");
-			o.setStorage("shelf");
-    		
+    		System.out.println("Action: " + action); 
+    		// Add target to order storage
+			o.setStorage("shelf");		
     		actions.add(action);
 		} else {		
 			if(o.getTemp().equals("room")) {
@@ -65,12 +68,12 @@ public class Tools {
     }
     
     public static void placeOnHeaterCoolerOnly(Order o,Map<String, Order> coolerOrHeater,  List<Action> actions,Instant timestamp) {
+    	coolerOrHeater.put(o.getId(), o);
     	String target = (o.getTemp().equals("hot"))? "heater" : "cooler"; 
 		Action action = new Action(timestamp, o.getId(), "place", target);
-    	coolerOrHeater.put(o.getId(), o);
-    
+		System.out.println("Action: " + action);    
 		actions.add(action);
-		//storageLookUp.put(o.getId(), target);
+        // Add target to order storage
 		o.setStorage(target);
     }
   }
