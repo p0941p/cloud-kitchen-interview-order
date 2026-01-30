@@ -107,8 +107,7 @@ public class Main implements Runnable {
 		
 		Instant timestamp = Instant.now();
 		order.setTimestamp(timestamp);
-	    ExecutorService pickExecutor = Executors.newSingleThreadExecutor();
-	    
+	  
 		if (!order.getTemp().equals("room")) {
 			Map<String, Order> coolerOrHeater = (order.getTemp().equals("hot")) ? heater : cooler;
 			int size = coolerOrHeater.size();
@@ -124,13 +123,6 @@ public class Main implements Runnable {
 		}
 		Callable<String> pickOrders = () -> pickUpOrderEntry(order, min, max, actions, cooler, heater, shelf);
 		Future<String> result = executor.submit(pickOrders);
-		
-		pickExecutor.shutdown();
-		try {
-			pickExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-		} catch (InterruptedException e) {
-			LOGGER.error(e.getMessage());
-		}
 	}
   
 	private String pickUpOrderEntry(Order order, Duration min, Duration max, List<Action> actions,
