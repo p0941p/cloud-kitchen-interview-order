@@ -105,14 +105,16 @@ public class Main implements Runnable {
 		Instant timestamp = Instant.now();
 		order.setTimestamp(timestamp);
 	    ExecutorService pickExecutor = Executors.newSingleThreadExecutor();
+	    
 		if (!order.getTemp().equals("room")) {
 			Map<String, Order> coolerOrHeater = (order.getTemp().equals("hot")) ? heater : cooler;
 			int size = coolerOrHeater.size();
 			if (size < 6) {
 				Tools.placeOnHeaterCoolerOnly(order, coolerOrHeater, actions, timestamp);
 			} else {
+				// Heater or Cooler is full, place on shelf and deduct freshness time
 				order.setFreshness(order.getFreshness() / 2);
-				Tools.placeOnShelf(order, shelf, actions, timestamp, cooler, heater);
+				Tools.placeOnShelfFromHC(order, shelf, actions, timestamp, cooler, heater);
 			}
 		} else {
 			Tools.placeOnShelf(order, shelf, actions, timestamp, cooler, heater);
@@ -132,7 +134,7 @@ public class Main implements Runnable {
 		
 		Map<String, Order> cooler, Map<String, Order> heater, PriorityBlockingQueue<Order> shelf) {
 		try {
-			//Pickup Interval
+			//Wait for Pickup Interval
 			long interval = Tools.getInterval(max, min);
 			Thread.sleep(interval);
 			

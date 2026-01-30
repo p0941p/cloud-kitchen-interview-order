@@ -43,6 +43,19 @@ public class Tools {
     	return true;   	
     }
   
+    public static void placeOnShelfFromHC(Order order, PriorityBlockingQueue<Order> shelf, List<Action> actions, Instant epochTime,Map<String, Order> cooler, Map<String, Order> heater) {
+           if(shelf.size() < 12) {
+        	   shelf.add(order);
+       		Action action = new Action(epochTime, order.getId(), "place", "shelf");
+       		System.out.println("Action: " + action); 
+       		// Add target to order storage
+       		order.setStorage("shelf");		
+       		actions.add(action);
+           } else {
+        	   Tools.discardNPlace(actions,epochTime, shelf, order);
+           }
+    }
+    
     public static void placeOnShelf(Order order, PriorityBlockingQueue<Order> shelf, List<Action> actions, Instant epochTime,Map<String, Order> cooler, Map<String, Order> heater) {
     	if(shelf.size() < 12) {
     		shelf.add(order);
@@ -52,16 +65,16 @@ public class Tools {
     		order.setStorage("shelf");		
     		actions.add(action);
 		} else {		
-			if(order.getTemp().equals("room")) {
-				Tools.discardNPlace(actions,epochTime, shelf, order);
-			} else {
-			    Map<String, Order> coolerOrHeater = (order.getTemp().equals("hot"))? heater : cooler; 
+			if(!order.getTemp().equals("room")) {
+				Map<String, Order> coolerOrHeater = (order.getTemp().equals("hot"))? heater : cooler; 
 			    int size = coolerOrHeater.size();
 			    if(size < 6) {
 				    placeOnHeaterCoolerOnly(order, coolerOrHeater, actions, epochTime);
 			    } else {
 			    Tools.discardNPlace(actions,epochTime, shelf, order);
 			    }
+			} else {
+				Tools.discardNPlace(actions,epochTime, shelf, order);
 			}
 		}
     }
