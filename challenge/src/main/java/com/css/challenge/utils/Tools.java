@@ -1,5 +1,6 @@
 package com.css.challenge.utils;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,11 @@ public class Tools {
     	heap.offer(o);
     	Action actionPlace = new Action(epochTime, o.getId(), "place", "shelf");
     	actions.add(actionPlace);   	
+    }
+    
+
+    public static long getInterval(Duration max, Duration min) {
+    	 return  (long)((Math.random() * (max.toMillis() - min.toMillis())) + min.toMillis());   
     }
     
     public static boolean isFresh(Order o) {
