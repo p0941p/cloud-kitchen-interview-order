@@ -62,6 +62,8 @@ public class Main implements Runnable {
 
   @Override
 	public void run() {
+	  
+	    ExecutorService executor = Executors.newFixedThreadPool(20);
 		try {
 			Client client = new Client(endpoint, auth);
 			Problem problem = client.newProblem(name, seed);
@@ -71,8 +73,7 @@ public class Main implements Runnable {
 			Map<String, Order> heater = new ConcurrentHashMap<>();
 			Map<String, Order> cooler = new ConcurrentHashMap<>();
 			PriorityBlockingQueue<Order> shelf = new PriorityBlockingQueue<>(12, comparator);
-			ExecutorService executor = Executors.newFixedThreadPool(20);
-
+			
 			List<Action> actions = new ArrayList<>();
 			for (Order order : problem.getOrders()) {
 				LOGGER.info("Received: {}", order);
@@ -90,12 +91,14 @@ public class Main implements Runnable {
 				}
 			}
 			executor.shutdown();
-			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+			executor.awaitTermination(200, TimeUnit.SECONDS);
 		
 			String result = client.solveProblem(problem.getTestId(), rate, min, max, actions);
 			LOGGER.info("Result: {}", result);
 		} catch (IOException | InterruptedException e) {
 			LOGGER.error("Simulation failed: {}", e.getMessage());
+		} finally {
+			executor.shutdownNow();
 		}
 	}
    
