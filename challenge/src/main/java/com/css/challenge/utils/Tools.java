@@ -34,9 +34,9 @@ public class Tools {
     	 return  (long)((Math.random() * (max.toMillis() - min.toMillis())) + min.toMillis());   
     }
     
-    public static boolean isFresh(Order o) {
+    public static boolean isFresh(Order order) {
     	
-    	Instant expiration = o.getTimestamp().plusSeconds(o.getFreshness());	
+    	Instant expiration = order.getTimestamp().plusSeconds(order.getFreshness());	
     	if(Instant.now().isAfter(expiration)) {
     		return false;
     	}

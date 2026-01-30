@@ -79,6 +79,7 @@ public class Main implements Runnable {
 			}
 			
 			for (Order order : problem.getOrders()) {
+				// Place Order
 				placeOrder(order, heater, cooler, shelf, executor, actions);				
 			}
 			executor.shutdown();
