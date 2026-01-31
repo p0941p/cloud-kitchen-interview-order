@@ -11,18 +11,19 @@ import com.css.challenge.client.Order;
 
 public class Tools {
 
-	public static void discardNPlace(List<Action> actions, Instant epochTime, ShelfStorage shelf,
-			Order order) {
-		Order discarded = shelf.discard();
-		Action actionDiscard = new Action(epochTime, discarded.getId(), "discard", "shelf");
-		actions.add(actionDiscard);
-		System.out.println("Action: " + actionDiscard);
+	//A Shelf operation
+	public static void discardNPlace(List<Action> actions, Instant epochTime, ShelfStorage shelf, Order order) {
+		synchronized (shelf) {
+			Order discarded = shelf.discard();
+			Action actionDiscard = new Action(epochTime, discarded.getId(), "discard", "shelf");
+			actions.add(actionDiscard);
+			System.out.println("Action: " + actionDiscard);
 
-		shelf.add(order);
-		Action actionPlace = new Action(epochTime, order.getId(), "place", "shelf");
-		actions.add(actionPlace);
-		System.out.println("Action: " + actionPlace);
-
+			shelf.add(order);
+			Action actionPlace = new Action(epochTime, order.getId(), "place", "shelf");
+			actions.add(actionPlace);
+			System.out.println("Action: " + actionPlace);
+		}
 		order.setStorage("shelf");
 	}
 
@@ -37,7 +38,8 @@ public class Tools {
     	}
     	return true;   	
     }
-
+    
+    // placeOnShelfFromHC is used only when heater or cooler is full and add an order to shelf
 	public static void placeOnShelfFromHC(Order order, ShelfStorage shelf, List<Action> actions,
 			Instant epochTime, Map<String, Order> cooler, Map<String, Order> heater) {
 		if (shelf.size() < 12) {

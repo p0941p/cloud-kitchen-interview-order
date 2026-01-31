@@ -24,7 +24,6 @@ public class ShelfStorage {
 			   HCtreemap.put(order, order.getId());
 		   }
 		   treemap.put(order, order.getId());
-		
 	   }
 
 	   public synchronized boolean moveHotOrCold(Map<String, Order> heater, Map<String, Order> cooler) {
