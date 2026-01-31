@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -22,7 +21,6 @@ import com.css.challenge.client.Action;
 import com.css.challenge.client.Client;
 import com.css.challenge.client.Order;
 import com.css.challenge.client.Problem;
-import com.css.challenge.utils.DurationComparator;
 import com.css.challenge.utils.ShelfStorage;
 import com.css.challenge.utils.Tools;
 

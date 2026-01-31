@@ -10,8 +10,7 @@ public class DurationComparator implements Comparator<Order>{
 
 	@Override
 	public int compare(Order x, Order y) {
-		
-		
+
 		if(x != null && y!= null) {
 			Instant durationX =  x.getTimestamp().plusSeconds(x.getFreshness());
 			Instant durationY =  y.getTimestamp().plusSeconds(y.getFreshness());
