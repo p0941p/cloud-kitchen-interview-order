@@ -1,20 +1,15 @@
 package com.css.challenge.utils;
 
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.SortedSet;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 import com.css.challenge.client.Order;
 
 public class ShelfStorage {
 
-	    TreeMap<Order, String> treemap;
-	    TreeMap<Order, String> HCtreemap;
+	    TreeMap<Order, String> treemap; // storage for the whole shelf
+	    TreeMap<Order, String> HCtreemap; //duplicate storage for non-room temperature order
 	   
 	   public ShelfStorage() {
 		super();

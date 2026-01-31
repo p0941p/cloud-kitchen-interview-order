@@ -60,7 +60,7 @@ public class Main implements Runnable {
   @Option(names = "--max", description = "Maximum pickup time")
   Duration max = Duration.ofSeconds(8);
 
-  static ShelfStorage shelf = new ShelfStorage();
+
   @Override
 	public void run() {
 	  
@@ -70,15 +70,9 @@ public class Main implements Runnable {
 			Problem problem = client.newProblem(name, seed);
 
 			// ------ Execution harness logic goes here using rate, min and max ----
-			Comparator<Order> comparator = new DurationComparator();
 			Map<String, Order> heater = new ConcurrentHashMap<>();
 			Map<String, Order> cooler = new ConcurrentHashMap<>();
-			//PriorityBlockingQueue<Order> shelf = new PriorityBlockingQueue<>(12, comparator);
-			//ShelfStorage shelf = new ShelfStorage();
-			
-			
-			
-			
+			ShelfStorage shelf = new ShelfStorage();
 			List<Action> actions = new ArrayList<>();
 			for (Order order : problem.getOrders()) {
 				LOGGER.info("Received: {}", order);
@@ -97,8 +91,8 @@ public class Main implements Runnable {
 			}
 			
 			executor.shutdown();
-			//executor.awaitTermination(20000, TimeUnit.SECONDS);
-		    executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+			executor.awaitTermination(700, TimeUnit.SECONDS);
+		    //executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 
 			String result = client.solveProblem(problem.getTestId(), rate, min, max, actions);
 			LOGGER.info("Result: {}", result);
