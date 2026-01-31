@@ -8,15 +8,14 @@ import com.css.challenge.client.Order;
 
 public class ShelfStorage {
 
-	    TreeMap<Order, String> treemap; // storage for the whole shelf
-	    TreeMap<Order, String> HCtreemap; //duplicate storage for non-room temperature order
+	   TreeMap<Order, String> treemap; // storage for the whole shelf
+	   TreeMap<Order, String> HCtreemap; //duplicate storage for non-room temperature order
 	   
 	   public ShelfStorage() {
 		super();
 		Comparator<Order> comparator = new DurationComparator();
 		this.HCtreemap = new TreeMap<>(comparator);
-		this.treemap = new TreeMap<>(comparator);
-		
+		this.treemap = new TreeMap<>(comparator);		
 	   }  
 	   
 	   public synchronized void add(Order order) {	
@@ -56,6 +55,7 @@ public class ShelfStorage {
 				treemap.remove(order);
 			}
 		}
+	   
 		public synchronized Order discard() {
 			Order order = null;
 			order = treemap.pollFirstEntry().getKey();
@@ -70,13 +70,11 @@ public class ShelfStorage {
 		public  int size() {
 			return treemap.size();
 		}
-		
-		
+				
 		public synchronized boolean contains(Order order) {			
 			if(treemap.containsKey(order)) {
 				return true;
 			}
 			return false;
-		}
-		  	   
+		}	  	   
 }

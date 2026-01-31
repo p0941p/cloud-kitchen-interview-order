@@ -120,6 +120,7 @@ public class Main implements Runnable {
 		} else {
 			Tools.placeOnShelf(order, shelf, actions, timestamp, cooler, heater);
 		}
+		//Call pickOrders task asynchronously  
 		Callable<String> pickOrders = () -> pickUpOrderEntry(order, min, max, actions, cooler, heater, shelf);
 		Future<String> result = executor.submit(pickOrders);
 	}
