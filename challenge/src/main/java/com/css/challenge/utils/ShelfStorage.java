@@ -27,13 +27,17 @@ public class ShelfStorage {
 		this.hotOrColdList = Collections.synchronizedList(new ArrayList<Order>());
 	   }  
 	   
-	   public synchronized void add(Order order) {
-		   
+	   public synchronized void add(Order order) {	
+		   if(order.getTemp().equals("hot") || order.getTemp().equals("cold") ) { 
+			   System.out.println();
+		   }
 		   if(order.getTemp().equals("hot") || order.getTemp().equals("cold") ) { 
 			   hotOrColdList.add(order);
 			   mapToList.put(order, hotOrColdList.indexOf(order));
 		   }
 		   sortedSet.add(order);
+		   order.setStorage("shelf");
+		   System.out.println();
 		   
 	   }
 	   
@@ -68,7 +72,7 @@ public class ShelfStorage {
 			}
 			sortedSet.remove(order);
 //			System.out.println(sortedSet);
-//			System.out.println();
+			System.out.println();
 		}
         
 		public synchronized Order discard() {

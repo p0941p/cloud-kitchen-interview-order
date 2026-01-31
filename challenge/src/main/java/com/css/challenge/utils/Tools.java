@@ -39,6 +39,8 @@ public class Tools {
 		Action actionPlace = new Action(epochTime, order.getId(), "place", "shelf");
 		actions.add(actionPlace);
 		System.out.println("Action: " + actionPlace);
+		
+		order.setStorage("shelf");
     }
 
     public static long getInterval(Duration max, Duration min) {
@@ -67,7 +69,7 @@ public class Tools {
            }
     }
    */
-	public static void placeOnShelfFromHC(Order order, ShelfStorage shelf, List<Action> actions,
+	public static synchronized void placeOnShelfFromHC(Order order, ShelfStorage shelf, List<Action> actions,
 			Instant epochTime, Map<String, Order> cooler, Map<String, Order> heater) {
 		if (shelf.size() < 12) {
 			shelf.add(order);
@@ -105,7 +107,7 @@ public class Tools {
 		}
     }
     */
-	public static void placeOnShelf(Order order, ShelfStorage shelf, List<Action> actions,
+	public static synchronized void placeOnShelf(Order order, ShelfStorage shelf, List<Action> actions,
 			Instant epochTime, Map<String, Order> cooler, Map<String, Order> heater) {
 		if (shelf.size() < 12) {
 			shelf.add(order);
@@ -134,7 +136,7 @@ public class Tools {
 		}		
 	}
 	
-    public static void placeOnHeaterCoolerOnly(Order o,Map<String, Order> coolerOrHeater,  List<Action> actions,Instant timestamp) {
+    public static synchronized void placeOnHeaterCoolerOnly(Order o,Map<String, Order> coolerOrHeater,  List<Action> actions,Instant timestamp) {
     	coolerOrHeater.put(o.getId(), o);
     	String target = (o.getTemp().equals("hot"))? "heater" : "cooler"; 
 		Action action = new Action(timestamp, o.getId(), "place", target);
