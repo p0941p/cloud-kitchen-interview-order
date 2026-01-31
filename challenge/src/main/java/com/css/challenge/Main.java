@@ -99,10 +99,7 @@ public class Main implements Runnable {
 			executor.shutdown();
 			//executor.awaitTermination(20000, TimeUnit.SECONDS);
 		    executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-		    System.out.println("On Shelf: " + shelf.size() + ": " + shelf.getSortedSet() + "array: " +shelf.getHotOrColdList());
-		    System.out.println("On Heater: " + heater.size());
-		    System.out.println("On Cooler: " + cooler.size());
-		    System.out.println(pickupFired);
+
 			String result = client.solveProblem(problem.getTestId(), rate, min, max, actions);
 			LOGGER.info("Result: {}", result);
 		} catch (IOException | InterruptedException e) {
@@ -112,7 +109,7 @@ public class Main implements Runnable {
 		}
 	}
  
-  private synchronized void placeOrder(Order order, Map<String, Order> heater, Map<String, Order> cooler,
+  private void placeOrder(Order order, Map<String, Order> heater, Map<String, Order> cooler,
 			ShelfStorage shelf, ExecutorService executor, List<Action> actions) {
 		
 		Instant timestamp = Instant.now();
@@ -134,8 +131,7 @@ public class Main implements Runnable {
 		Callable<String> pickOrders = () -> pickUpOrderEntry(order, min, max, actions, cooler, heater, shelf);
 		Future<String> result = executor.submit(pickOrders);
 	}
-  
-  
+
 	private String pickUpOrderEntry(Order order, Duration min, Duration max, List<Action> actions,
 		
 		Map<String, Order> cooler, Map<String, Order> heater, ShelfStorage shelf) {
@@ -152,10 +148,8 @@ public class Main implements Runnable {
 		}
 		return "pickup thread of " + order + "is done";
 	}
-	
-	
 
-	private synchronized void pickUpOrder(Instant timestamp, List<Action> actions, Map<String, Order> cooler,
+	private void pickUpOrder(Instant timestamp, List<Action> actions, Map<String, Order> cooler,
 			Map<String, Order> heater, Order order, ShelfStorage shelf) {
 		//pickupFired.add(order.getId());    
 		Action action;
@@ -167,7 +161,7 @@ public class Main implements Runnable {
 				cooler.remove(order.getId());
 				action = new Action(timestamp, order.getId(), "discard", "cooler");				
 			} else {		
-				shelf.removeOrder(order,pickupFired);
+				shelf.removeOrder(order);
 				action = new Action(timestamp, order.getId(), "discard", "shelf");		
 			}
 		} else {
@@ -178,7 +172,7 @@ public class Main implements Runnable {
 				cooler.remove(order.getId());
 				action = new Action(timestamp, order.getId(), "pickup", "cooler");				
 			} else {
-				shelf.removeOrder(order, pickupFired);
+				shelf.removeOrder(order);
 				action = new Action(timestamp, order.getId(), "pickup", "shelf");				
 			}
 		}
