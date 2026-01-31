@@ -89,6 +89,8 @@ public class Order {
         + price
         + ", freshness:"
         + freshness
+        + ", storage:"
+        + storage
         + "}";
   }
 

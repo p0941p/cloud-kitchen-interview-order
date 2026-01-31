@@ -60,6 +60,7 @@ public class Main implements Runnable {
   @Option(names = "--max", description = "Maximum pickup time")
   Duration max = Duration.ofSeconds(8);
 
+  static ShelfStorage shelf = new ShelfStorage();
   @Override
 	public void run() {
 	  
@@ -73,7 +74,10 @@ public class Main implements Runnable {
 			Map<String, Order> heater = new ConcurrentHashMap<>();
 			Map<String, Order> cooler = new ConcurrentHashMap<>();
 			//PriorityBlockingQueue<Order> shelf = new PriorityBlockingQueue<>(12, comparator);
-			ShelfStorage shelf = new ShelfStorage();
+			//ShelfStorage shelf = new ShelfStorage();
+			
+			
+			
 			
 			List<Action> actions = new ArrayList<>();
 			for (Order order : problem.getOrders()) {
@@ -93,8 +97,12 @@ public class Main implements Runnable {
 			}
 			
 			executor.shutdown();
-			executor.awaitTermination(2000, TimeUnit.SECONDS);
-		
+			//executor.awaitTermination(20000, TimeUnit.SECONDS);
+		    executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+		    System.out.println("On Shelf: " + shelf.size() + ": " + shelf.getSortedSet() + "array: " +shelf.getHotOrColdList());
+		    System.out.println("On Heater: " + heater.size());
+		    System.out.println("On Cooler: " + cooler.size());
+		    System.out.println(pickupFired);
 			String result = client.solveProblem(problem.getTestId(), rate, min, max, actions);
 			LOGGER.info("Result: {}", result);
 		} catch (IOException | InterruptedException e) {
@@ -103,31 +111,8 @@ public class Main implements Runnable {
 			//executor.shutdownNow();
 		}
 	}
-   /*
-	private void placeOrder(Order order, Map<String, Order> heater, Map<String, Order> cooler,
-			PriorityBlockingQueue<Order> shelf, ExecutorService executor, List<Action> actions) {
-		
-		Instant timestamp = Instant.now();
-		order.setTimestamp(timestamp);
-	  
-		if (!order.getTemp().equals("room")) {
-			Map<String, Order> coolerOrHeater = (order.getTemp().equals("hot")) ? heater : cooler;
-			int size = coolerOrHeater.size();
-			if (size < 6) {
-				Tools.placeOnHeaterCoolerOnly(order, coolerOrHeater, actions, timestamp);
-			} else {
-				// Heater or Cooler is full, place on shelf and deduct freshness time
-				order.setFreshness(order.getFreshness() / 2);
-				Tools.placeOnShelfFromHC(order, shelf, actions, timestamp, cooler, heater);
-			}
-		} else {
-			Tools.placeOnShelf(order, shelf, actions, timestamp, cooler, heater);
-		}
-		Callable<String> pickOrders = () -> pickUpOrderEntry(order, min, max, actions, cooler, heater, shelf);
-		Future<String> result = executor.submit(pickOrders);
-	}
-  */
-  private void placeOrder(Order order, Map<String, Order> heater, Map<String, Order> cooler,
+ 
+  private synchronized void placeOrder(Order order, Map<String, Order> heater, Map<String, Order> cooler,
 			ShelfStorage shelf, ExecutorService executor, List<Action> actions) {
 		
 		Instant timestamp = Instant.now();
@@ -170,9 +155,9 @@ public class Main implements Runnable {
 	
 	
 
-	private void pickUpOrder(Instant timestamp, List<Action> actions, Map<String, Order> cooler,
+	private synchronized void pickUpOrder(Instant timestamp, List<Action> actions, Map<String, Order> cooler,
 			Map<String, Order> heater, Order order, ShelfStorage shelf) {
-
+		//pickupFired.add(order.getId());    
 		Action action;
 		if (!Tools.isFresh(order)) {
 			if (order.getStorage().equals("heater")) {
@@ -182,27 +167,18 @@ public class Main implements Runnable {
 				cooler.remove(order.getId());
 				action = new Action(timestamp, order.getId(), "discard", "cooler");				
 			} else {		
-				shelf.removeOrder(order);
+				shelf.removeOrder(order,pickupFired);
 				action = new Action(timestamp, order.getId(), "discard", "shelf");		
 			}
 		} else {
 			if (order.getStorage().equals("heater")) {		
-				if(!heater.containsKey(order.getId())) {
-					System.out.println("*********************Heater MISSING " + order);
-				}
 				heater.remove(order.getId());
 				action = new Action(timestamp, order.getId(), "pickup", "heater");			
 			} else if (order.getStorage().equals("cooler")) {
-				if(!cooler.containsKey(order.getId())) {
-					System.out.println("*********************Cooler MISSING " + order);
-				}
 				cooler.remove(order.getId());
 				action = new Action(timestamp, order.getId(), "pickup", "cooler");				
 			} else {
-				if(!(order.getStorage().equals("shelf") && shelf.contains(order))) {
-					System.out.println("*********************Shelf MISSING " + order);
-				}
-				shelf.removeOrder(order);
+				shelf.removeOrder(order, pickupFired);
 				action = new Action(timestamp, order.getId(), "pickup", "shelf");				
 			}
 		}

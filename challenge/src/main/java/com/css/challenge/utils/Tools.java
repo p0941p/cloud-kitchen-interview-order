@@ -28,7 +28,7 @@ public class Tools {
     	actions.add(actionPlace);   	
     }
     */
-    public static void discardNPlace(List<Action> actions, Instant epochTime, ShelfStorage shelf, Order order) {
+    public static synchronized void discardNPlace(List<Action> actions, Instant epochTime, ShelfStorage shelf, Order order) {
     	Order discarded = shelf.discard();
 		//if (discarded != null) {
 			Action actionDiscard = new Action(epochTime, discarded.getId(), "discard", "shelf");
@@ -77,8 +77,7 @@ public class Tools {
 			actions.add(action);
 			System.out.println("Action: " + action);
 			// Add target to order storage
-			//order.setStorage("shelf");
-			
+			//order.setStorage("shelf");		
 		} else {
 			Tools.discardNPlace(actions, epochTime, shelf, order);
 		}
