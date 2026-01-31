@@ -99,7 +99,7 @@ public class Main implements Runnable {
 		} catch (IOException | InterruptedException e) {
 			LOGGER.error("Simulation failed: {}", e.getMessage());
 		} finally {
-			//executor.shutdownNow();
+			executor.shutdownNow();
 		}
 	}
  
