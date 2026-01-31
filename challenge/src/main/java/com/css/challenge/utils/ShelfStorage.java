@@ -32,11 +32,12 @@ public class ShelfStorage {
 			   System.out.println();
 		   }
 		   if(order.getTemp().equals("hot") || order.getTemp().equals("cold") ) { 
+			   order.setStorage("shelf");
 			   hotOrColdList.add(order);
 			   mapToList.put(order, hotOrColdList.indexOf(order));
 		   }
 		   sortedSet.add(order);
-		   order.setStorage("shelf");
+		 
 		   System.out.println();
 		   
 	   }
