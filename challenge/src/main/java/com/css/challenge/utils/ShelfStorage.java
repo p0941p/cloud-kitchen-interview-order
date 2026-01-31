@@ -8,8 +8,8 @@ import com.css.challenge.client.Order;
 
 public class ShelfStorage {
 
-	   TreeMap<Order, String> treemap; // storage for the whole shelf
-	   TreeMap<Order, String> HCtreemap; //duplicate storage for non-room temperature order
+	   private TreeMap<Order, String> treemap; // storage for the whole shelf
+	   private TreeMap<Order, String> HCtreemap; //duplicate storage for non-room temperature order
 	   
 	   public ShelfStorage() {
 		super();
@@ -46,13 +46,10 @@ public class ShelfStorage {
 		}
 
 	   public synchronized void removeOrder(Order order) {
-			
-			synchronized (this) {
 				if (order.getTemp().equals("hot") || order.getTemp().equals("cold")) {
 					HCtreemap.remove(order);
 				}
 				treemap.remove(order);
-			}
 		}
 	   
 		public synchronized Order discard() {
