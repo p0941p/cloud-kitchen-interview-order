@@ -79,7 +79,6 @@ public class Main implements Runnable {
 			for (Order order : problem.getOrders()) {
 				// Place Order
 				placeOrder(order, heater, cooler, shelf, executor, actions);		
-				
 				try {
 					Thread.sleep(rate);
 				} catch (InterruptedException e) {
@@ -90,8 +89,7 @@ public class Main implements Runnable {
 			
 			executor.shutdown();
 			executor.awaitTermination(700, TimeUnit.SECONDS);
-		    //executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-
+	
 			String result = client.solveProblem(problem.getTestId(), rate, min, max, actions);
 			LOGGER.info("Result: {}", result);
 		} catch (IOException | InterruptedException e) {
@@ -144,7 +142,6 @@ public class Main implements Runnable {
 
 	private void pickUpOrder(Instant timestamp, List<Action> actions, Map<String, Order> cooler,
 			Map<String, Order> heater, Order order, ShelfStorage shelf) {
-		//pickupFired.add(order.getId());    
 		Action action;
 		if (!Tools.isFresh(order)) {
 			if (order.getStorage().equals("heater")) {

@@ -57,12 +57,11 @@ public class Tools {
 	public static void placeOnShelf(Order order, ShelfStorage shelf, List<Action> actions,
 			Instant epochTime, Map<String, Order> cooler, Map<String, Order> heater) {
 		if (shelf.size() < 12) {
-			order.setStorage("shelf");
 			shelf.add(order);
 			Action action = new Action(epochTime, order.getId(), "place", "shelf");
 			System.out.println("Action: " + action);
 			// Add target to order storage
-			// order.setStorage("shelf");
+			order.setStorage("shelf");
 			actions.add(action);
 		} else {
 			if (shelf.moveHotOrCold(heater, cooler)) {

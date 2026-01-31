@@ -25,7 +25,7 @@ public class ShelfStorage {
 		   }
 		   treemap.put(order, order.getId());
 	   }
-
+       // Returning true if hot or cool orders is successfully moved to heater or cooler
 	   public synchronized boolean moveHotOrCold(Map<String, Order> heater, Map<String, Order> cooler) {
 			if (!HCtreemap.isEmpty()) {
 				
