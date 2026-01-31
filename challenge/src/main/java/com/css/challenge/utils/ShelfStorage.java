@@ -22,17 +22,14 @@ public class ShelfStorage {
 		Comparator<Order> comparator = new DurationComparator();
 		this.mapToList = new ConcurrentHashMap<>();
 		//this.sortedSet = new ConcurrentSkipListSet<>(comparator);
-		SortedSet<Order> sortedSetRaw = new TreeSet<>(comparator);
-		this.sortedSet = Collections.synchronizedSortedSet(sortedSetRaw);
+		this.sortedSet = Collections.synchronizedSortedSet(new TreeSet<>(comparator));
 		this.hotOrColdList = Collections.synchronizedList(new ArrayList<Order>());
 	   }  
 	   
 	   public synchronized void add(Order order) {	
+		   order.setStorage("shelf");
 		   if(order.getTemp().equals("hot") || order.getTemp().equals("cold") ) { 
-			   System.out.println();
-		   }
-		   if(order.getTemp().equals("hot") || order.getTemp().equals("cold") ) { 
-			   order.setStorage("shelf");
+			  
 			   hotOrColdList.add(order);
 			   mapToList.put(order, hotOrColdList.indexOf(order));
 		   }
